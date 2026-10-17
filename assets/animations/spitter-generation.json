@@ -1,0 +1,7 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "reference": "monsters-walk-v1.png",
+  "asset": "spitter-walk-v1.png",
+  "prompt": "Use case: stylized-concept. Asset type: transparent sprite sheet for the pixel-art top-down horde game Horda Sombria. Input image role: style and monster-palette reference only. Create ONE NEW enemy species, a VENOM SPITTER, a squat beetle/toad-like insect monster with a dark-purple chitin body, ivory short jointed legs/feet, two small amber eyes, and one clearly visible bulging GREEN venom sac on its back and green mouth facing RIGHT. Different silhouette from the reference spider/eye/beast/giant. Menacing but simple/readable at 50 pixels tall. Style: same chunky crisp pixel clusters, dark outline, purple shadows, bone highlights, restrained green glow only inside sac. Produce exactly SIX sequential GROUNDED WALK animation frames of this same creature, in a clean THREE-COLUMN TWO-ROW grid, read left-to-right then top-to-bottom. All poses face right with a slight front-quarter/top-down view and consistent size and common baseline per row. Low alternating leg steps, body and head stable, slight sac breathing. Every frame has feet visibly planted, no jumping or floating. Full creature entirely inside each cell, generous transparent padding, no cell overlaps. Transparent background with genuine alpha. No floor, cast shadows, haze, text, frame numbers, borders, projectiles, weapons, other creatures or decorative particles. Keep the six poses consistent enough for a looping animation."
+}

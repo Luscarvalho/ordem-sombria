@@ -1,0 +1,92 @@
+{
+	"canvas": [
+		438.0,
+		411.0
+	],
+	"contact_frames": [
+		0,
+		3
+	],
+	"frames": [
+		{
+			"anchor_x": 290.0,
+			"hand": [
+				366.0,
+				264.0
+			],
+			"region": [
+				77,
+				48,
+				322,
+				399
+			]
+		},
+		{
+			"anchor_x": 799.0,
+			"hand": [
+				881.0,
+				265.0
+			],
+			"region": [
+				595,
+				48,
+				309,
+				399
+			]
+		},
+		{
+			"anchor_x": 1316.0,
+			"hand": [
+				1395.0,
+				262.0
+			],
+			"region": [
+				1109,
+				48,
+				337,
+				399
+			]
+		},
+		{
+			"anchor_x": 290.0,
+			"hand": [
+				370.0,
+				767.0
+			],
+			"region": [
+				80,
+				550,
+				334,
+				396
+			]
+		},
+		{
+			"anchor_x": 802.0,
+			"hand": [
+				881.0,
+				767.0
+			],
+			"region": [
+				589,
+				550,
+				323,
+				396
+			]
+		},
+		{
+			"anchor_x": 1315.0,
+			"hand": [
+				1394.0,
+				767.0
+			],
+			"region": [
+				1102,
+				550,
+				316,
+				396
+			]
+		}
+	],
+	"parent": "res://assets/animations/hunter-walk-restored-v5.tres",
+	"source": "res://assets/animations/hunter-down-diagonal-v2.png"
+}

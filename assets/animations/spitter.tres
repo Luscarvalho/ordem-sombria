@@ -1,0 +1,73 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://daat84ao4slv"]
+
+[ext_resource type="Texture2D" uid="uid://13kbgvg2cunx" path="res://assets/animations/spitter-walk-v1.png" id="1_s8ogp"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tu2yv"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(50, 137, 428, 319)
+margin = Rect2(7, 17, 14, 23)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ucmp"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(566, 129, 398, 327)
+margin = Rect2(22, 9, 44, 15)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2s6mf"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(1063, 126, 421, 330)
+margin = Rect2(10, 6, 21, 12)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8b0bs"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(58, 611, 425, 313)
+margin = Rect2(8, 23, 17, 29)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hh771"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(557, 611, 423, 323)
+margin = Rect2(9, 13, 19, 19)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_khro7"]
+atlas = ExtResource("1_s8ogp")
+region = Rect2(1061, 608, 430, 320)
+margin = Rect2(6, 16, 12, 22)
+filter_clip = true
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tu2yv")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tu2yv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1ucmp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2s6mf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8b0bs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hh771")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_khro7")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 7.0
+}]

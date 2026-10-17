@@ -1,0 +1,428 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/animations/hunter-walk-v1.png" id="1_uoac1"]
+[ext_resource type="Texture2D" path="res://assets/animations/hunter-vertical-v1.png" id="2_7vruo"]
+[ext_resource type="Texture2D" path="res://assets/animations/hunter-down-diagonal-v2.png" id="3_ohjub"]
+[ext_resource type="Texture2D" path="res://assets/animations/hunter-up-diagonal-v2.png" id="4_kqawp"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cbeb4"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(940, 65, 302, 376)
+margin = Rect2(12, 7, 24, 13)
+filter_clip = true
+metadata/hand_socket = Vector2(1208, 276)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ntcb2"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(411, 21, 268, 338)
+margin = Rect2(24, 12, 48, 18)
+filter_clip = true
+metadata/hand_socket = Vector2(597, 237)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3jwfb"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(77, 48, 322, 399)
+margin = Rect2(6, 6, 116, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(366, 264)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e642j"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(411, 379, 260, 327)
+margin = Rect2(24, 9, 49, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(671.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hbovm"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(587, 50, 317, 418)
+margin = Rect2(25, 6, 51, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(877, 272)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c2i1r"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(55, 64, 309, 377)
+margin = Rect2(8, 6, 17, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(338, 282)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5p3ui"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(502, 64, 298, 375)
+margin = Rect2(14, 8, 28, 14)
+filter_clip = true
+metadata/hand_socket = Vector2(772, 276)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfop4"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(1385, 63, 299, 376)
+margin = Rect2(13, 7, 27, 13)
+filter_clip = true
+metadata/hand_socket = Vector2(1659, 271)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r5pil"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(62, 484, 314, 366)
+margin = Rect2(6, 17, 12, 23)
+filter_clip = true
+metadata/hand_socket = Vector2(331, 701)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o12kn"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(508, 486, 292, 370)
+margin = Rect2(17, 13, 34, 19)
+filter_clip = true
+metadata/hand_socket = Vector2(770, 702)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qbhdc"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(945, 486, 297, 370)
+margin = Rect2(14, 13, 29, 19)
+filter_clip = true
+metadata/hand_socket = Vector2(1208, 700)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p2q8k"]
+atlas = ExtResource("1_uoac1")
+region = Rect2(1393, 484, 291, 372)
+margin = Rect2(17, 11, 35, 17)
+filter_clip = true
+metadata/hand_socket = Vector2(1659, 690)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5cpev"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(34, 18, 298, 344)
+margin = Rect2(9, 6, 18, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(258, 231)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nmu2e"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(754, 18, 296, 341)
+margin = Rect2(10, 9, 20, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(962, 222)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_amg5o"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1113, 21, 304, 341)
+margin = Rect2(6, 9, 12, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(1341, 232)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dru6q"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1496, 21, 261, 341)
+margin = Rect2(27, 9, 55, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(1681, 236)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ixjf"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1834, 21, 298, 337)
+margin = Rect2(9, 13, 18, 19)
+filter_clip = true
+metadata/hand_socket = Vector2(2044, 230)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_36kpa"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(595, 48, 309, 399)
+margin = Rect2(15, 6, 129, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(881, 265)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ixski"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(1109, 48, 337, 399)
+margin = Rect2(12, 6, 101, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(1395, 262)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xkrac"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(80, 550, 334, 396)
+margin = Rect2(9, 9, 104, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(370, 767)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w7nw3"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(589, 550, 323, 396)
+margin = Rect2(6, 9, 115, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(881, 767)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7r0hs"]
+atlas = ExtResource("3_ohjub")
+region = Rect2(1102, 550, 316, 396)
+margin = Rect2(6, 9, 122, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(1394, 767)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tx508"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(38, 379, 297, 327)
+margin = Rect2(6, 9, 12, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(316.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ibp4"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(751, 376, 292, 330)
+margin = Rect2(8, 6, 17, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(1027.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u51lm"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1120, 379, 297, 327)
+margin = Rect2(6, 9, 12, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(1398.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jtso4"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1500, 376, 257, 330)
+margin = Rect2(26, 6, 52, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(1758.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xb4ru"]
+atlas = ExtResource("2_7vruo")
+region = Rect2(1836, 379, 294, 327)
+margin = Rect2(7, 9, 15, 15)
+filter_clip = true
+metadata/hand_socket = Vector2(2113.28, 571.77997)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7mify"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(80, 50, 338, 418)
+margin = Rect2(15, 6, 30, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(383, 271)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d8jn6"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(1090, 50, 331, 418)
+margin = Rect2(18, 6, 37, 12)
+filter_clip = true
+metadata/hand_socket = Vector2(1389, 272)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jf53x"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(79, 531, 356, 417)
+margin = Rect2(6, 7, 12, 13)
+filter_clip = true
+metadata/hand_socket = Vector2(384, 749)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_152ml"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(583, 531, 325, 417)
+margin = Rect2(21, 7, 43, 13)
+filter_clip = true
+metadata/hand_socket = Vector2(879, 751)
+metadata/hand_radius = 17.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s8hde"]
+atlas = ExtResource("4_kqawp")
+region = Rect2(1090, 531, 351, 417)
+margin = Rect2(8, 7, 17, 13)
+filter_clip = true
+metadata/hand_socket = Vector2(1389, 751)
+metadata/hand_radius = 17.0
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cbeb4")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ntcb2")
+}],
+"loop": 1,
+"name": &"idle_down",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3jwfb")
+}],
+"loop": 1,
+"name": &"idle_down_diagonal",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e642j")
+}],
+"loop": 1,
+"name": &"idle_up",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hbovm")
+}],
+"loop": 1,
+"name": &"idle_up_diagonal",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c2i1r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5p3ui")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cbeb4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sfop4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r5pil")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o12kn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qbhdc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p2q8k")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5cpev")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ntcb2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nmu2e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_amg5o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dru6q")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ixjf")
+}],
+"loop": 1,
+"name": &"walk_down",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3jwfb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_36kpa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ixski")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xkrac")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w7nw3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7r0hs")
+}],
+"loop": 1,
+"name": &"walk_down_diagonal",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tx508")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e642j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1ibp4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u51lm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jtso4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xb4ru")
+}],
+"loop": 1,
+"name": &"walk_up",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7mify")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hbovm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d8jn6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jf53x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_152ml")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s8hde")
+}],
+"loop": 1,
+"name": &"walk_up_diagonal",
+"speed": 6.0
+}]
+metadata/walk_source = "res://assets/animations/hunter-directions-v3.tres"
+metadata/revision = "v6: down diagonals have full foot contact at frames 1 and 4"

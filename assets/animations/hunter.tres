@@ -1,0 +1,91 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/animations/hunter-walk-v1.png" id="1_ahhoh"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tkvk0"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(940, 65, 302, 376)
+margin = Rect2(12, 7, 24, 13)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gb6aw"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(55, 64, 309, 377)
+margin = Rect2(8, 6, 17, 12)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_75cmv"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(502, 64, 298, 375)
+margin = Rect2(14, 8, 28, 14)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jlx18"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(1385, 63, 299, 376)
+margin = Rect2(13, 7, 27, 13)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_48sxf"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(62, 484, 314, 366)
+margin = Rect2(6, 17, 12, 23)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wfpnk"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(508, 486, 292, 370)
+margin = Rect2(17, 13, 34, 19)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a2vh0"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(945, 486, 297, 370)
+margin = Rect2(14, 13, 29, 19)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_syi8r"]
+atlas = ExtResource("1_ahhoh")
+region = Rect2(1393, 484, 291, 372)
+margin = Rect2(17, 11, 35, 17)
+filter_clip = true
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tkvk0")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gb6aw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_75cmv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tkvk0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jlx18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_48sxf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wfpnk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a2vh0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_syi8r")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12.0
+}]

@@ -1,0 +1,73 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://by2mfpyfqg5s5"]
+
+[ext_resource type="Texture2D" uid="uid://dijple8apeoav" path="res://assets/animations/monsters-walk-v1.png" id="1_lol28"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vmyby"]
+atlas = ExtResource("1_lol28")
+region = Rect2(29, 521, 219, 198)
+margin = Rect2(6, 12, 12, 18)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0trdc"]
+atlas = ExtResource("1_lol28")
+region = Rect2(291, 520, 219, 201)
+margin = Rect2(6, 9, 12, 15)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vqsgt"]
+atlas = ExtResource("1_lol28")
+region = Rect2(545, 521, 216, 203)
+margin = Rect2(7, 7, 15, 13)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dgov3"]
+atlas = ExtResource("1_lol28")
+region = Rect2(798, 521, 217, 203)
+margin = Rect2(7, 7, 14, 13)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hjb45"]
+atlas = ExtResource("1_lol28")
+region = Rect2(1044, 518, 218, 204)
+margin = Rect2(6, 6, 13, 12)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4eg58"]
+atlas = ExtResource("1_lol28")
+region = Rect2(1310, 521, 202, 198)
+margin = Rect2(14, 12, 29, 18)
+filter_clip = true
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vmyby")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vmyby")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0trdc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vqsgt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dgov3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hjb45")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4eg58")
+}],
+"loop": 0,
+"name": &"walk",
+"speed": 8.0
+}]
