@@ -12,28 +12,37 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
 
 - WASD ou setas: mover. A arma mira e dispara automaticamente em um inimigo próximo.
 - Celular: arraste no lado esquerdo da tela para mover com o joystick virtual.
+  O joystick flutuante usa contornos octogonais translúcidos, base com 10% de
+  opacidade e cursor com 16% de preenchimento. Só aparece enquanto o dedo está
+  controlando a personagem; o tamanho e a sensibilidade do movimento não mudam.
 - P / Esc ou botão Pausar: pausar e continuar.
 - R ou clique/toque no contador de munição: recarregar antes de esvaziar.
 - Subida de nível: clique/toque em uma carta ou use 1, 2, 3.
 
 ## Conteúdo
 
-- Uma caçadora e três armas iniciais: revólver, escopeta e cajado.
+- Uma caçadora e seis armas: revólver, escopeta, cajado, Lâmina do Retorno,
+  Lança-granadas e Pistolas Gêmeas. A seleção tem duas páginas de três cartas,
+  sem diminuir o tamanho no celular. Veja `docs/weapons.md` para as mecânicas.
 - Seleção com arte ampliada em pixel art e atributos iniciais de cada arma:
   dano por projétil, disparos por segundo, alcance, munição, tempo de recarga,
-  projéteis e perfuração.
+  projéteis e perfuração (ou raio da explosão, no lança-granadas).
   Perfuração indica alvos adicionais por projétil; o cajado começa com +1.
 - Munição e recarga: revólver com 6 tiros/1,2 s; escopeta com 2 salvas/1,6 s;
-  cajado com 8 cargas/1,8 s. Reserva ilimitada. Uma salva gasta uma munição,
+  cajado com 8 cargas/1,8 s; lâmina com 3 cargas/1 s; lança-granadas com
+  3 granadas/1,65 s; pistolas com 20 tiros/1,5 s. Reserva ilimitada. Uma salva gasta uma munição,
   independentemente do número de projéteis. Recarrega ao esvaziar e após
   0,65 s sem alvo; R ou o contador de munição permite antecipar a recarga.
   A personagem continua andando, com barra de progresso no HUD e sob os pés.
   Recarga ágil aumenta a velocidade em 20% por nível; Bandoleira adiciona duas
   munições por nível. Ambos evoluem até III. Pausa e cartas congelam a recarga.
 - Alcance máximo por arma, incluindo a distância até a ponta da arma:
-  revólver 300, escopeta 160 e cajado 240 unidades de mundo. A mira automática
+  revólver 300, escopeta 160, cajado 240, lâmina 250, lança-granadas 280 e
+  pistolas 230 unidades de mundo. A mira automática
   considera somente inimigos dentro do alcance. Perfuração e projéteis extras
-  não ampliam essa distância. Esses valores ficam em `game_data.gd`.
+  não ampliam essa distância. A explosão da granada alcança 60 unidades ao redor
+  do impacto; a lâmina retorna à caçadora depois do trajeto de ida. Esses valores
+  ficam em `game_data.gd`.
 - Hordas por etapas: primeiro apenas aranhas, aumentando em quantidade; depois
   entram aranhas velozes, aranhas de carapaça, olhos que atiram, feras com
   arrancada e cuspidores de veneno. Os inimigos mantêm uma pequena separação
@@ -60,11 +69,18 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
   comparação do efeito. A maioria evolui até III; dano e cadência até V.
   Buffs no máximo saem do sorteio. Com opções suficientes, a próxima seleção
   evita repetir as cartas anteriores e oferece uma evolução já adquirida quando
-  disponível. Consulte `docs/buffs.md` para os valores.
-- Progressão mais espaçada: a primeira melhoria exige 40 XP (20 aranhas);
-  os próximos custos são 64, 96 e 140 XP, crescendo em 35% mais 10 XP.
-  O excedente de experiência é
-  preservado. O ajuste fica nas constantes de progressão em `game_data.gd`.
+  disponível. Evoluções têm fundo/borda azulados e o rótulo EVOLUÇÃO; cartas
+  inéditas mantêm o fundo original e o rótulo NOVO, inclusive nos baús.
+  Consulte `docs/buffs.md` para os valores e a cobertura de validação.
+- Progressão inicial mais rápida: a primeira melhoria exige 18 XP (seis aranhas);
+  os próximos custos são 29, 42 e 59 XP, crescendo em 25% mais 6 XP.
+  Até o nível 5, o sorteio inclui uma melhoria de combate quando disponível.
+  O excedente é preservado e o raio básico de coleta é de 110 unidades.
+  Cinco segundos antes do chefe, as almas já derrubadas são atraídas e novas
+  ondas comuns aguardam. O ajuste fica nas constantes em `game_data.gd`.
+- Nascimentos distribuídos entre oito setores ao redor da tela, sem repetir um
+  setor antes de passar pelos demais. A separação maior e os limites menores
+  evitam blocos compactos; novas ondas aguardam quando há muitos monstros perto.
 - Caçadora redesenhada em uma única folha, `assets/animations/hunter-final-v8.png`.
   Oito quadros por caminhada, com poses paradas, proporções e paleta uniformes.
   Cinco vistas desenhadas e três espelhadas cobrem as oito direções.
@@ -88,7 +104,9 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
   além da reprodução, das solas e dos encaixes das armas. A folha v4 rejeitada
   continua falhando no teste de troca das pernas.
 - Pedras, tocos e colunas quebradas distribuídos pelo terreno, com a área de
-  nascimento livre e passagens entre os objetos. A disposição permanece fixa
+  nascimento livre e passagens entre os objetos. Cada célula de 240 unidades tem
+  36% de chance de conter um obstáculo, cerca de 53% menos que antes.
+  A disposição permanece fixa
   ao explorar e retornar ao mesmo lugar. Personagem e inimigos colidem e
   deslizam pelas bordas; inimigos contornam os obstáculos. Os objetos também
   bloqueiam projéteis dos dois lados e ocultam alvos da mira automática.
@@ -112,6 +130,16 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
 - **Efeitos sonoros** tem volume separado das músicas, inclusive para silenciar
   apenas os efeitos. **Testar som** permite ouvir o ajuste dentro das configurações.
 - O progresso da partida ainda não é salvo permanentemente.
+- HUD minimalista: XP em uma faixa de 4 pixels no topo, vida e munição à
+  esquerda, tempo centralizado e nível/pausa à direita. A munição continua
+  clicável para recarregar. Arma, alcance, abates, fase, vida máxima e tempo
+  até o chefe ficam na pausa, junto dos controles. Chefes usam uma barra fina
+  separada, exibida somente durante a luta; os botões preservam áreas de toque
+  confortáveis sem ocupar a tela com painéis grandes.
+  Em celulares, apenas o HUD é ampliado em 50%, sem mudar câmera, cenário ou
+  menus. A pausa usa duas barras desenhadas e fundo contrastante, com área de
+  toque de 66×66 unidades na escala normal do perfil mobile. Em janelas muito
+  estreitas, a ampliação diminui para manter os grupos separados.
 
 ## Organização
 
@@ -129,6 +157,8 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
 - `scripts/actor.gd`: corpo físico compartilhado, movimentação nativa, hitboxes, animações e armas.
 - `scripts/weapon_cycle.gd`: munição, recarga automática/manual e melhorias do carregador.
 - `scripts/weapon_mount.gd`: pontos da mão por quadro e encaixe de cada arma.
+- `scripts/player_projectile.gd` e `scenes/projectiles/`: áreas, formas nativas
+  e sprites dos projéteis de retorno e das granadas.
 - `scripts/arena.gd`: chão procedural decorativo.
 - `scripts/terrain_obstacles.gd`: obstáculos em pixels, colisão, cobertura e distribuição pelo mundo.
 - `scripts/interface.gd`: menus, HUD, cartas e joystick.
@@ -210,10 +240,43 @@ Etapas da horda, limites, tiros anunciados, chefes a cada cinco minutos e pausa:
 godot --headless --path . --script res://tests/encounters.gd
 ```
 
+Progressão inicial, opções de combate, distribuição dos nascimentos, alívio de
+aglomerações e coleta de XP antes dos chefes:
+
+```sh
+godot --headless --path . --script res://tests/progression.gd
+```
+
+HUD minimalista: limites em quatro resoluções, valores de XP/vida/munição,
+recarga por clique, pausa com estatísticas e barra contextual dos chefes:
+
+```sh
+godot --headless --path . --script res://tests/minimal_hud.gd
+godot --headless --path . --script res://tests/mobile_hud.gd
+```
+
+Simulação reproduzível de cinco minutos com um bot que coleta almas e prioriza
+melhorias ofensivas (troque `revolver` por `shotgun` ou `wand`):
+
+```sh
+godot --headless --fixed-fps 60 --path . --script res://tools/simulate_progression.gd -- revolver /tmp/horda-progression.json
+```
+
+Por padrão, o bot é invulnerável para medir XP e densidade sem interromper a
+amostra por morte; isso não estima a sobrevivência de um jogador. Acrescente
+`mortal` depois do caminho de saída para ativar o dano normal.
+
 Regressão de alcance (mira, limite exato, dispersão, velocidade e perfuração):
 
 ```sh
 godot --headless --path . --script res://tests/weapon_range.gd
+```
+
+Armas novas: seleção paginada, lâmina na ida/volta, explosões, terreno,
+formas nativas, pistolas alternadas, pausa e remoção dos projéteis:
+
+```sh
+godot --headless --path . --script res://tests/new_weapons.gd
 ```
 
 Ciclos de animação, alinhamento, recuo, pausa e movimento em diferentes taxas:
@@ -251,6 +314,8 @@ Níveis, limites, sorteio, ritmo de XP, sprites e efeitos reais dos 22 buffs:
 
 ```sh
 godot --headless --path . --script res://tests/buffs.gd
+godot --headless --path . --script res://tests/buff_audit.gd
+godot --headless --path . --script res://tests/upgrade_cards.gd
 ```
 
 Ritmo dos passos, viradas graduais, continuidade da animação e estabilidade da mira:

@@ -19,6 +19,10 @@ const Obstacles = preload("res://scripts/terrain_obstacles.gd")
 const BossChest = preload("res://scripts/boss_chest.gd")
 const BossArena = preload("res://scripts/boss_arena.gd")
 const WeaponCycle = preload("res://scripts/weapon_cycle.gd")
+const ProjectileScenes := {
+	"return": preload("res://scenes/projectiles/return_blade.tscn"),
+	"grenade": preload("res://scenes/projectiles/grenade.tscn"),
+}
 const Interface = preload("res://scripts/interface.gd")
 const PixelTheme = preload("res://scripts/pixel_theme.gd")
 const Music = preload("res://scripts/music.gd")
@@ -32,6 +36,7 @@ var state := "menu"
 var previous_state := "playing"
 var actors: Node2D
 var combat_visuals: Node2D
+var projectile_layer: Node2D
 var arena: Node2D
 var obstacles: Node2D
 var boss_arena: Node2D
@@ -63,7 +68,7 @@ var damage_multiplier := 1.0
 var rate_multiplier := 1.0
 var move_speed := 170.0
 var player_velocity := Vector2.ZERO
-var pickup_radius := 65.0
+var pickup_radius := Data.BASE_PICKUP_RADIUS
 var extra_pellets := 0
 var extra_pierce := 0
 var fire_damage := 0.0
@@ -101,6 +106,10 @@ func _ready() -> void:
 	combat_visuals.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	combat_visuals.draw.connect(_draw_combat)
 	add_child(combat_visuals)
+	projectile_layer = Node2D.new()
+	projectile_layer.name = "PlayerProjectiles"
+	projectile_layer.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	add_child(projectile_layer)
 	player = $Actors/Hunter
 	player.weapon = weapon_id
 	level_up_aura = LevelUpAura.new()
@@ -140,7 +149,7 @@ func start_run(selected_weapon: String) -> void:
 	for enemy in enemies:
 		enemy.queue_free()
 	enemies.clear()
-	bullets.clear()
+	_clear_bullets()
 	gems.clear()
 	_clear_chests()
 	effects.clear()
@@ -170,7 +179,7 @@ func start_run(selected_weapon: String) -> void:
 	damage_multiplier = 1.0
 	rate_multiplier = 1.0
 	move_speed = 170.0
-	pickup_radius = 65.0
+	pickup_radius = Data.BASE_PICKUP_RADIUS
 	extra_pellets = 0
 	extra_pierce = 0
 	fire_damage = 0.0
@@ -201,7 +210,7 @@ func return_to_menu() -> void:
 	for enemy in enemies:
 		enemy.queue_free()
 	enemies.clear()
-	bullets.clear()
+	_clear_bullets()
 	gems.clear()
 	_clear_chests()
 	effects.clear()
@@ -296,8 +305,7 @@ func _spawn_enemy(forced_kind: int = -1, spawn_point: Variant = null, scene: Pac
 	enemy.max_hp *= 1.0 + minf(1.5, maxf(0, elapsed - 60.0) / 1200.0)
 	enemy.hp = enemy.max_hp
 	enemy.speed *= minf(1.2, 1.0 + elapsed / 3600.0)
-	var distance := get_viewport_rect().size.length() * 0.55 + rng.randf_range(40, 100)
-	var point: Vector2 = player.position + Vector2.from_angle(rng.randf() * TAU) * distance if spawn_point == null else spawn_point
+	var point: Vector2 = encounters.spawn_position(enemy.radius) if spawn_point == null else spawn_point
 	enemy.position = obstacles.safe_position(point, enemy.radius)
 	obstacles.ensure_collision(enemy.position, enemy.position, enemy.radius)
 	actors.add_child(enemy)
@@ -336,8 +344,7 @@ func _update_enemies(delta: float) -> void:
 	for index in range(enemies.size() - 1, -1, -1):
 		var enemy := enemies[index]
 		if enemy.is_queued_for_deletion() and enemy.hp > 0:
-			var point: Vector2 = player.position + player.position.direction_to(enemy.position) * 750.0
-			var replacement := _spawn_enemy(enemy.enemy_type, point)
+			var replacement := _spawn_enemy(enemy.enemy_type)
 			for property in ["hp", "max_hp", "speed", "damage", "xp", "burn", "burn_damage", "slow_time", "slow_factor", "poison_time", "poison_damage", "knockback"]:
 				replacement.set(property, enemy.get(property))
 			replacement.brain = enemy.brain.duplicate(true)
@@ -443,7 +450,14 @@ func _fire(target: Node2D) -> void:
 		var offset := muzzle - origin
 		var projection := offset.dot(shot_direction)
 		var remaining := -projection + sqrt(maxf(0.0, projection * projection + weapon.range * weapon.range - offset.length_squared()))
-		bullets.append({"position": muzzle, "velocity": velocity, "remaining": remaining, "origin": origin, "reach": weapon.range, "damage": weapon.damage * damage_multiplier * shot_multiplier, "hits": [], "pierce": extra_pierce + weapon.pierce, "bounces": buffs.rank("ricochet"), "color": Color("efb775") if shot_multiplier > 1.0 else weapon.color})
+		var mode: String = weapon.get("mode", "bullet")
+		var bullet := {"position": muzzle, "previous": muzzle, "velocity": velocity, "remaining": remaining, "origin": origin, "reach": weapon.range, "damage": weapon.damage * damage_multiplier * shot_multiplier, "hits": [], "pierce": extra_pierce + weapon.pierce, "bounces": buffs.rank("ricochet"), "color": Color("efb775") if shot_multiplier > 1.0 else weapon.color, "mode": mode, "phase": "outbound", "age": 0.0, "lifetime": weapon.get("lifetime", 10.0), "impact_count": 0, "blast_radius": weapon.get("blast_radius", 0.0)}
+		if ProjectileScenes.has(mode):
+			var projectile: Area2D = ProjectileScenes[mode].instantiate()
+			projectile.position = muzzle
+			projectile_layer.add_child(projectile)
+			bullet.node = projectile
+		bullets.append(bullet)
 	shot_clock = weapon.interval / rate_multiplier
 	if weapon_cycle.ammo == 0:
 		reload_weapon()
@@ -452,35 +466,130 @@ func _fire(target: Node2D) -> void:
 func _update_bullets(delta: float) -> void:
 	for i in range(bullets.size() - 1, -1, -1):
 		var bullet: Dictionary = bullets[i]
+		var mode: String = bullet.get("mode", "bullet")
+		var previous_age: float = bullet.get("age", 0.0)
+		bullet.age = previous_age + delta
+		if mode == "return" and bullet.age >= bullet.lifetime:
+			_discard_bullet(i)
+			continue
+		if mode == "return" and bullet.phase == "returning":
+			if not _update_returning_blade(bullet, delta):
+				_discard_bullet(i)
+			continue
 		var old: Vector2 = bullet.position
 		bullet.previous = old
-		var travel := minf(bullet.velocity.length() * delta, bullet.remaining)
+		var step := minf(delta, maxf(0.0, bullet.lifetime - previous_age)) if mode == "grenade" else delta
+		var travel := minf(bullet.velocity.length() * step, bullet.remaining)
 		bullet.position += bullet.velocity.normalized() * travel
-		var terrain_fraction: float = obstacles.projectile_fraction(old, bullet.position)
+		var terrain_fraction := _bullet_terrain_fraction(bullet, old, bullet.position)
 		var blocked := terrain_fraction < 1.0
 		if blocked:
 			bullet.position = old.lerp(bullet.position, terrain_fraction)
 		bullet.remaining -= travel
-		for enemy in enemies:
+		for impact in _bullet_impacts(bullet, old, bullet.position):
+			var enemy: Actor = impact.enemy
 			if enemy.hp <= 0 or enemy.get_instance_id() in bullet.hits:
 				continue
-			var center: Vector2 = enemy.position + Vector2(0, -14)
-			var closest := Geometry2D.get_closest_point_to_segment(center, old, bullet.position)
-			if not enemy.intersects_projectile(old, bullet.position):
-				continue
-			buffs.hit_projectile(enemy, bullet)
-			bullet.hits.append(enemy.get_instance_id())
-			if bullet.hits.size() > bullet.pierce:
+			if mode == "grenade":
+				_explode_grenade(bullet, impact.point)
+			else:
+				buffs.hit_projectile(enemy, bullet)
+				bullet.hits.append(enemy.get_instance_id())
+			bullet.impact_count = int(bullet.get("impact_count", 0)) + 1
+			if bullet.impact_count > bullet.pierce:
 				var end: Vector2 = bullet.position
-				bullet.position = closest
-				bullet.remaining += end.distance_to(closest)
+				bullet.position = impact.point
+				bullet.remaining += end.distance_to(impact.point)
 				if buffs.ricochet(bullet):
 					blocked = false
 					break
 				bullet.remaining = 0
 				break
-		if bullet.remaining <= 0 or blocked:
-			bullets.remove_at(i)
+		_sync_bullet_visual(bullet)
+		if bullet.remaining <= 0 or blocked or (mode == "grenade" and bullet.age >= bullet.lifetime):
+			if mode == "return":
+				_begin_blade_return(bullet)
+			else:
+				if mode == "grenade":
+					_explode_grenade(bullet, bullet.position)
+				_discard_bullet(i)
+
+func _bullet_impacts(bullet: Dictionary, from: Vector2, to: Vector2) -> Array[Dictionary]:
+	var impacts: Array[Dictionary] = []
+	for enemy in enemies:
+		if enemy.hp <= 0 or enemy.get_instance_id() in bullet.hits:
+			continue
+		var intersects: bool = bullet.node.intersects_enemy(enemy, from, to) if bullet.has("node") else enemy.intersects_projectile(from, to)
+		if not intersects:
+			continue
+		var closest := Geometry2D.get_closest_point_to_segment(enemy.hurt_shape.global_position, from, to)
+		impacts.append({"enemy": enemy, "point": closest, "distance": from.distance_squared_to(closest)})
+	impacts.sort_custom(func(first: Dictionary, second: Dictionary) -> bool: return first.distance < second.distance)
+	return impacts
+
+func _bullet_terrain_fraction(bullet: Dictionary, from: Vector2, to: Vector2) -> float:
+	if bullet.has("node"):
+		return obstacles.cast(from + Vector2(0, 15), to - from, bullet.node.body_shape.shape.radius).fraction
+	return obstacles.projectile_fraction(from, to)
+
+func _explode_grenade(bullet: Dictionary, at: Vector2) -> void:
+	var damaged := false
+	for enemy in enemies:
+		if enemy.hp <= 0 or enemy.get_instance_id() in bullet.hits:
+			continue
+		if bullet.node.blast_hits(enemy, at, bullet.blast_radius):
+			buffs.hit_projectile(enemy, bullet)
+			bullet.hits.append(enemy.get_instance_id())
+			damaged = true
+	if damaged or not bullet.get("detonated", false):
+		buffs.pulse(at, bullet.blast_radius, bullet.color)
+		music.play_sfx("grenade_blast")
+	bullet.detonated = true
+
+func _begin_blade_return(bullet: Dictionary) -> void:
+	bullet.phase = "returning"
+	bullet.hits.clear()
+	bullet.impact_count = 0
+	bullet.velocity = Vector2(bullet.position).direction_to(player.position + AIM_OFFSET) * maxf(540.0, move_speed * 1.8)
+
+func _update_returning_blade(bullet: Dictionary, delta: float) -> bool:
+	var old: Vector2 = bullet.position
+	var target: Vector2 = player.position + AIM_OFFSET
+	var distance := old.distance_to(target)
+	if distance <= 12.0:
+		return false
+	bullet.previous = old
+	bullet.velocity = old.direction_to(target) * maxf(540.0, move_speed * 1.8)
+	bullet.position = old.move_toward(target, bullet.velocity.length() * delta)
+	var fraction := _bullet_terrain_fraction(bullet, old, bullet.position)
+	if fraction < 1.0:
+		bullet.position = old.lerp(bullet.position, fraction)
+	for impact in _bullet_impacts(bullet, old, bullet.position):
+		if bullet.impact_count > bullet.pierce:
+			break
+		buffs.hit_projectile(impact.enemy, bullet)
+		bullet.hits.append(impact.enemy.get_instance_id())
+		bullet.impact_count += 1
+	_sync_bullet_visual(bullet)
+	return fraction >= 1.0 and Vector2(bullet.position).distance_to(target) > 12.0
+
+func _sync_bullet_visual(bullet: Dictionary) -> void:
+	if bullet.has("node"):
+		bullet.node.position = bullet.position
+		bullet.node.update_visual(bullet, 1.0)
+
+func _discard_bullet(index: int) -> void:
+	var bullet: Dictionary = bullets[index]
+	if bullet.has("node"):
+		projectile_layer.remove_child(bullet.node)
+		bullet.node.queue_free()
+	bullets.remove_at(index)
+
+func _clear_bullets() -> void:
+	bullets.clear()
+	for projectile in projectile_layer.get_children():
+		projectile_layer.remove_child(projectile)
+		projectile.queue_free()
 
 func _remove_dead_enemies() -> void:
 	for i in range(enemies.size() - 1, -1, -1):
@@ -492,14 +601,30 @@ func _remove_dead_enemies() -> void:
 		encounters.on_death(enemy)
 		if enemy.brain.get("boss", false):
 			_drop_boss_chest(enemy.position)
-		if gems.size() < 240:
-			gems.append({"position": enemy.position, "value": enemy.xp, "attracted": false})
-		else:
-			# Preserve all earned XP even when the number of visible gems is capped.
-			gems[0].value += enemy.xp
+		_drop_experience(enemy.position, enemy.xp)
 		_effect(enemy.position, "+", Color("74b7a8"))
 		enemy.queue_free()
 		enemies.remove_at(i)
+
+func _drop_experience(at: Vector2, value: int) -> void:
+	if value <= 0:
+		return
+	if gems.size() < Data.MAX_EXPERIENCE_ORBS:
+		gems.append({"position": at, "value": value, "attracted": false})
+		return
+	var closest := 0
+	var distance := INF
+	for index in range(gems.size()):
+		var candidate: float = at.distance_squared_to(gems[index].position)
+		if candidate < distance:
+			closest = index
+			distance = candidate
+	gems[closest].value += value
+
+func attract_all_experience() -> void:
+	for gem in gems:
+		gem.attracted = true
+		gem.attraction_speed = maxf(Data.GEM_ATTRACTION_SPEED, player.position.distance_to(gem.position) / 2.0)
 
 func _update_gems(delta: float) -> void:
 	for i in range(gems.size() - 1, -1, -1):
@@ -509,7 +634,8 @@ func _update_gems(delta: float) -> void:
 		if distance < pickup_radius:
 			gem.attracted = true
 		if gem.attracted:
-			gem.position = gem.position.move_toward(player.position, 360 * delta)
+			var speed := maxf(float(gem.get("attraction_speed", Data.GEM_ATTRACTION_SPEED)), move_speed * 1.8)
+			gem.position = gem.position.move_toward(player.position, speed * delta)
 		if gem.position.distance_to(player.position) < 15:
 			experience += gem.value
 			gems.remove_at(i)
@@ -574,6 +700,12 @@ func _roll_upgrade_choices() -> void:
 		var evolution: Dictionary = owned[rng.randi_range(0, owned.size() - 1)]
 		choices.append(evolution)
 		pool.erase(evolution)
+	if level <= 5 and not choices.any(func(upgrade: Dictionary) -> bool: return upgrade.id in Data.STARTER_COMBAT_UPGRADES):
+		var combat: Array = pool.filter(func(upgrade: Dictionary) -> bool: return upgrade.id in Data.STARTER_COMBAT_UPGRADES)
+		if not combat.is_empty():
+			var upgrade: Dictionary = combat[rng.randi_range(0, combat.size() - 1)]
+			choices.append(upgrade)
+			pool.erase(upgrade)
 	while choices.size() < 3 and not pool.is_empty():
 		var index := rng.randi_range(0, pool.size() - 1)
 		choices.append(pool.pop_at(index))
@@ -673,6 +805,9 @@ func _draw_combat() -> void:
 		var p: Vector2 = Vector2(gem.get("previous", gem.position)).lerp(gem.position, fraction)
 		combat_visuals.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -5), p + Vector2(4, 0), p + Vector2(0, 5), p + Vector2(-4, 0)]), Color("70c9b5"))
 	for bullet in bullets:
+		if bullet.has("node"):
+			bullet.node.update_visual(bullet, fraction)
+			continue
 		var p: Vector2 = Vector2(bullet.get("previous", bullet.position)).lerp(bullet.position, fraction)
 		combat_visuals.draw_line(p - bullet.velocity.normalized() * 12, p, bullet.color, 3.0)
 		combat_visuals.draw_circle(p, 2.0, Color("fff0c8"))

@@ -1,6 +1,8 @@
 extends RefCounted
 ## Combat effects for ranked cards. All clocks advance only with the run.
 
+const Data = preload("res://scripts/game_data.gd")
+
 var game: Node2D
 var shots := 0
 var shield_ready := false
@@ -28,7 +30,7 @@ func refresh_stats() -> void:
 	game.rate_multiplier = pow(1.15, rank("attack"))
 	game.weapon_cycle.set_modifiers(2*rank("ammo"), 1.0+0.20*rank("reload"))
 	game.move_speed = 170.0 * pow(1.12, rank("speed"))
-	game.pickup_radius = 65.0 * pow(1.45, rank("magnet"))
+	game.pickup_radius = Data.BASE_PICKUP_RADIUS * pow(1.45, rank("magnet"))
 	game.extra_pellets = rank("projectile")
 	game.extra_pierce = rank("pierce")
 	game.fire_damage = rank("ember") * 9.0
@@ -188,7 +190,7 @@ func draw(canvas: Node2D, fraction: float) -> void:
 		canvas.draw_rect(Rect2(p - Vector2(3, 3), Vector2(6, 6)), Color("bfa0e6"))
 		canvas.draw_rect(Rect2(p - Vector2(2, 2), Vector2(2, 2)), Color("f0dfbf"))
 	if shield_ready and game.state != "menu":
-		var center: Vector2 = game.player.get_global_transform_interpolated().origin + Vector2(0, -17)
+		var center: Vector2 = game.player.global_position + Vector2(0, -17)
 		canvas.draw_arc(center, 27.0, 0, TAU, 16, Color(0.56, 0.83, 0.93, 0.60), 2.0)
 	for effect in visuals:
 		var color: Color = effect.color

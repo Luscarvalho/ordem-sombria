@@ -38,7 +38,7 @@ func run_checks() -> void:
 	game.player.position=chest.position
 	game._physics_process(0.01)
 	assert(chest.opened and game.state=="upgrade" and game.ui.screen=="upgrades")
-	assert(game.choices.size()==3 and game.level==1 and game.experience==7 and game.next_level==40)
+	assert(game.choices.size()==3 and game.level==1 and game.experience==7 and game.next_level==Data.FIRST_LEVEL_XP)
 	assert(not game.level_up_aura.active,"Extra loot pretends to increase the player level")
 	var time_before: float=game.elapsed
 	var player_position: Vector2=game.player.position
@@ -48,7 +48,7 @@ func run_checks() -> void:
 	game.select_upgrade(0)
 	game.select_upgrade(0)
 	assert(game.state=="playing" and total_ranks(game.stacks)==1 and game.stacks[selected_id]==1)
-	assert(game.level==1 and game.experience==7 and game.next_level==40,"Chest consumed level progress")
+	assert(game.level==1 and game.experience==7 and game.next_level==Data.FIRST_LEVEL_XP,"Chest consumed level progress")
 	game._update_chests(1)
 	assert(game.chests.is_empty(),"Collected loot can be reopened")
 	# Matriarch drops too; unopened chests persist independently until approached.
@@ -65,7 +65,7 @@ func run_checks() -> void:
 	game.experience=game.next_level+5
 	game._physics_process(0.01)
 	assert(game.state=="upgrade" and game.chests.filter(func(c):return c.opened).size()==1)
-	assert(game.level==1 and game.experience==45,"A level-up overwrote the chest selection")
+	assert(game.level==1 and game.experience==Data.FIRST_LEVEL_XP+5,"A level-up overwrote the chest selection")
 	game.select_upgrade(0)
 	game.player.position=Vector2.ZERO
 	game._physics_process(0.01)
@@ -91,7 +91,7 @@ func run_checks() -> void:
 	game._drop_boss_chest(Vector2.ZERO)
 	game._update_chests(0.4)
 	assert(game.state=="playing" and game.choices.is_empty() and game.health==game.max_health)
-	assert(game.level==1 and game.experience==0 and game.next_level==40)
+	assert(game.level==1 and game.experience==0 and game.next_level==Data.FIRST_LEVEL_XP)
 	game.start_run("revolver")
 	assert(game.chests.is_empty() and game.stacks.is_empty())
 	game.queue_free()

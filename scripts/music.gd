@@ -12,12 +12,16 @@ const SFX := {
 	"revolver": preload("res://assets/audio/revolver.wav"),
 	"shotgun": preload("res://assets/audio/shotgun.wav"),
 	"wand": preload("res://assets/audio/wand.wav"),
+	"return_blade": preload("res://assets/audio/return_blade.wav"),
+	"grenade_launcher": preload("res://assets/audio/grenade_launcher.wav"),
+	"dual_pistols": preload("res://assets/audio/dual_pistols.wav"),
+	"grenade_blast": preload("res://assets/audio/grenade_blast.wav"),
 	"enemy_hit": preload("res://assets/audio/enemy_hit.wav"),
 	"player_hurt": preload("res://assets/audio/player_hurt.wav"),
 	"shield_block": preload("res://assets/audio/shield_block.wav"),
 	"level_up": preload("res://assets/audio/level_up.wav"),
 }
-const SFX_GAINS := {"reload_start": 0.30, "reload_end": 0.28, "revolver": 0.65, "shotgun": 0.85, "wand": 0.45, "enemy_hit": 0.28, "player_hurt": 0.75, "shield_block": 0.55, "level_up": 0.55}
+const SFX_GAINS := {"reload_start": 0.30, "reload_end": 0.28, "revolver": 0.65, "shotgun": 0.85, "wand": 0.45, "return_blade": 0.4, "grenade_launcher": 0.6, "dual_pistols": 0.4, "grenade_blast": 0.6, "enemy_hit": 0.28, "player_hurt": 0.75, "shield_block": 0.55, "level_up": 0.55}
 var settings_path := "user://audio_settings.cfg"
 var enabled := true
 var volumes := {"menu": 0.40, "game": 0.35, "effects": 0.55}

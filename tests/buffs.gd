@@ -41,9 +41,8 @@ func run_checks() -> void:
 			assert(line.length() == 16 and " " not in line, "Malformed sprite: " + card.id)
 		for rank in range(card.max_level):
 			assert(">" in Data.upgrade_preview(card.id, rank))
-	# The first four costs are slower; extra XP is retained, not silently lost.
 	game.start_run("revolver")
-	for expected in [40, 64, 96, 140]:
+	for expected in [18, 29, 42, 59]:
 		assert(game.next_level == expected)
 		var previous: Array[String] = game.last_offers.duplicate()
 		game.experience = expected + 7
@@ -84,7 +83,7 @@ func run_checks() -> void:
 	assert(is_equal_approx(game.damage_multiplier, 1.5))
 	assert(is_equal_approx(game.rate_multiplier, 1.3225))
 	assert(is_equal_approx(game.move_speed, 170 * pow(1.12, 3)))
-	assert(is_equal_approx(game.pickup_radius, 65 * pow(1.45, 2)))
+	assert(is_equal_approx(game.pickup_radius, Data.BASE_PICKUP_RADIUS * pow(1.45, 2)))
 	# Fire and poison both damage over time; frost changes real movement speed.
 	game.start_run("revolver")
 	grant(game, "ember", 2)
@@ -204,7 +203,7 @@ func run_checks() -> void:
 	game.start_run("wand")
 	assert(game.stacks.is_empty() and game.buffs.orbs.is_empty())
 	assert(not game.buffs.shield_ready and game.buffs.shots == 0 and game.max_health == 100)
-	print("PASS: 22 sprites, ranked previews/caps, slower XP, draft variety, all 12 new combat effects, health tradeoffs, pause and reset")
+	print("PASS: 22 sprites, ranked previews/caps, early XP curve, draft variety, all 12 new combat effects, health tradeoffs, pause and reset")
 	game.queue_free()
 	await process_frame
 	quit()

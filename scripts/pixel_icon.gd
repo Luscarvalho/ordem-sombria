@@ -8,6 +8,84 @@ static var weapon_textures: Dictionary = {}
 # Larger authored weapon silhouettes for the selection screen. The small masks
 # below remain unchanged for upgrade cards and HUD symbols.
 const WEAPON_MASKS := {
+	"return_blade": [
+		"................................",
+		"..................ooooo.........",
+		"...............oooshhhho........",
+		".............ooshhhhhho.........",
+		"...........ooshhhhhoo...........",
+		"..........oshhhhho..............",
+		".........oshhhho......oooo......",
+		"........oshhhho.....ooshho......",
+		".......oshhhho....ooshhho.......",
+		".......oshhho....oshhhho........",
+		"......oshhho....oshhhho.........",
+		"......oshhho...oshhhho..........",
+		"......oaaaao..oshhhho...........",
+		".......oaaaoooshhhho............",
+		".......obbaahhhhho..............",
+		".......obbraaaaoo...............",
+		".......obbboooo.................",
+		"........obbo....................",
+		".........oo.....................",
+		"................................",
+	],
+	"grenade_launcher": [
+		"..................................",
+		"..................................",
+		"...............oooooooooooooooo...",
+		".............oosshhhhhhhhhhhhhsso..",
+		"...........oosssccccccccccccccsso..",
+		".........oosgssssssssssssssssooo...",
+		"....ooooosssgaaaaaaaaaaaaaaaso.o...",
+		"...obbbbosssgsssssssssssssssso.o...",
+		"..obrrrboossgssssssssssssssssooo...",
+		"..obrrrbo..oooossssssssssssso......",
+		"...obbbo....oobboooooooooooo......",
+		"....obbo...obrbbo.................",
+		"....obbo...obrbbo.................",
+		"....obbo....obbo..................",
+		".....oo......oo...................",
+		"..................................",
+	],
+	"dual_pistols": [
+		"..................................",
+		"..................................",
+		".......ooooooooooooooooooo........",
+		".....ooshhhhhhhhhhhhhhhhso........",
+		"....ooscccccccccccccccccso........",
+		"...oosssaaaaasssssssssssso........",
+		"...ossssssssssssssssssooo.........",
+		"...obbbbooooossssooooo...........",
+		"..obrrbbo...ooooo................",
+		"..obrrbo..........................",
+		"..obbbo...........................",
+		"...ooo............................",
+		"...........ooooooooooooooooooo....",
+		".........ooshhhhhhhhhhhhhhhhso....",
+		"........ooscccccccccccccccccso....",
+		".......oosssaaaaasssssssssssso....",
+		".......ossssssssssssssssssooo.....",
+		".......obbbbooooossssooooo........",
+		"......obrrbbo...ooooo.............",
+		"......obrrbo......................",
+		"......obbbo.......................",
+		".......ooo........................",
+	],
+	"grenade_projectile": [
+		"................",
+		".......oooo.....",
+		"......osssso....",
+		"......ossooo....",
+		".....oaaaaao....",
+		"....oahhaaao....",
+		"....oahhaaaao...",
+		"....oaaaaaaao...",
+		".....oaaaaao....",
+		"......ooooo.....",
+		"................",
+		"................",
+	],
 	"revolver": [
 		"................................",
 		"................................",
@@ -104,7 +182,8 @@ static func weapon_texture(id: String) -> Texture2D:
 	for line in mask:
 		width = maxi(width, line.length())
 	var image := Image.create(width, mask.size(), false, Image.FORMAT_RGBA8)
-	var palette := {"o": Color("100d18"), "s": Color("a397a8"), "h": Color("f2dfbd"), "c": Color("d1c5cf"), "g": Color("64566e"), "b": Color("72516a"), "r": Color("a16a70"), "a": Color("83c9b3") if id == "wand" else Color("efb775")}
+	var accent: Color = {"wand": Color("83c9b3"), "return_blade": Color("b9a4e8"), "grenade_launcher": Color("eea477"), "grenade_projectile": Color("eea477")}.get(id, Color("efb775"))
+	var palette := {"o": Color("100d18"), "s": Color("a397a8"), "h": Color("f2dfbd"), "c": Color("d1c5cf"), "g": Color("64566e"), "b": Color("72516a"), "r": Color("a16a70"), "a": accent}
 	for y in range(mask.size()):
 		for x in range(mask[y].length()):
 			var key: String = mask[y][x]

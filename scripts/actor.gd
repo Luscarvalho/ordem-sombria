@@ -56,6 +56,7 @@ var move_blend := 0.0
 var recoil := 0.0
 var reload_progress := -1.0
 var muzzle_flash := 0.0
+var second_barrel := false
 var aim_hold := 0.0
 var base_scale := 1.0
 var foot_offset := 0.0
@@ -110,6 +111,7 @@ func reset_motion() -> void:
 	recoil = 0.0
 	reload_progress = -1.0
 	muzzle_flash = 0.0
+	second_barrel = false
 	aim_hold = 0.0
 	aiming = false
 	flash = 0.0
@@ -131,7 +133,9 @@ func reset_motion() -> void:
 	reset_physics_interpolation()
 
 func on_shot() -> void:
-	recoil = 5.0 if weapon == "shotgun" else (2.0 if weapon == "wand" else 3.0)
+	if weapon == "dual_pistols":
+		second_barrel = not second_barrel
+	recoil = 5.0 if weapon in ["shotgun", "grenade_launcher"] else (2.0 if weapon in ["wand", "dual_pistols"] else 3.0)
 	muzzle_flash = 0.055
 	aim_hold = 0.18
 	finishing_aim = true
@@ -302,10 +306,11 @@ func muzzle_position() -> Vector2:
 
 func _local_muzzle() -> Vector2:
 	var mount: Dictionary = Mount.WEAPONS[weapon]
-	return held_weapon.transform * (mount.muzzle - mount.grip)
+	var muzzle: Vector2 = mount.second_muzzle if weapon == "dual_pistols" and second_barrel else mount.muzzle
+	return held_weapon.transform * (muzzle - mount.grip)
 
 func _draw_muzzle() -> void:
-	if muzzle_flash <= 0:
+	if muzzle_flash <= 0 or weapon == "return_blade":
 		return
 	var color := Color("83c9b3") if weapon == "wand" else Color("ffdc91")
 	var muzzle := _local_muzzle()

@@ -23,7 +23,7 @@ max_hp = 105.0
 speed = 41.0
 damage = 15.0
 radius = 17.0
-xp = 5
+xp = 8
 visual_height = 43.0
 base_tint = Color(0.678431, 0.772549, 0.886275, 1)
 

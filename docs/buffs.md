@@ -3,6 +3,11 @@
 Uma escolha aumenta em um nível o buff da carta. Os níveis pertencem à partida
 atual e são zerados ao iniciar outra caçada. A carta mostra nível atual, próximo
 nível, limite e valores antes/depois, com um sprite próprio e cores por efeito.
+Cartas de buffs já adquiridos têm fundo e borda azulados, a indicação
+**EVOLUÇÃO** e a passagem de nível. Cartas inéditas mantêm o fundo original e
+a indicação **NOVO**. A diferença permanece no hover, no foco e ao pressionar,
+tanto nas melhorias por XP quanto nos baús; as cores dos sprites continuam
+identificando cada poder.
 
 Antes de abrir a seleção, a personagem recebe uma aura de 0,55 s com anéis,
 faíscas, texto do novo nível e um arpejo curto. Todo o combate fica congelado
@@ -51,13 +56,23 @@ explosões ao matar. Escudo e orbes têm efeitos visuais próprios na partida.
 
 ## Sorteio e experiência
 
-- Primeira carta: 40 XP (20 rastejantes de 2 XP).
-- Próximos custos: 64, 96 e 140 XP; fórmula `round(custo × 1,35 + 10)`.
+- Primeira carta: 18 XP (seis aranhas comuns de 3 XP).
+- Próximos custos: 29, 42 e 59 XP; fórmula `round(custo × 1,25 + 6)`.
 - XP excedente é preservado. Não há temporizador artificial para subir de nível.
+- Raio básico de coleta: 110 unidades, multiplicado por Colheita de almas.
+  As almas atraídas continuam perseguindo a personagem, a pelo menos 560 unidades/s
+  e sempre mais rápido que ela. O limite de 240 orbes preserva todo o XP,
+  juntando novos valores ao orbe mais próximo do abate.
+- Cinco segundos antes de cada chefe, todas as almas no chão são atraídas,
+  inclusive as distantes. O XP só é creditado ao chegar à personagem; não há XP
+  gratuito. A chegada do chefe repete a atração para incluir os abates recentes.
 - São até três opções distintas por seleção, sem buffs já no nível máximo.
 - Se houver três alternativas disponíveis, as cartas da seleção anterior ficam
   fora da próxima seleção. Entre as opções restantes, uma evolução de buff já
   adquirido é garantida quando existir.
+- Até o nível 5, também há uma opção de combate quando disponível no conjunto
+  elegível: dano, cadência, projéteis extras, perfuração, brasa, veneno, raio,
+  orbes ou ricochete. Ela pode ser a própria evolução já garantida.
 - Se só restarem uma ou duas cartas evoluíveis, elas continuam disponíveis.
   Ao maximizar todos os buffs, os níveis seguintes não abrem uma tela vazia.
 - Pausa, cartas e configurações congelam recargas, órbitas e efeitos de combate.
@@ -84,7 +99,8 @@ os buffs já estão no máximo, o baú restaura a vida em vez de abrir cartas va
 ## Munição e recarga das armas
 
 A reserva é ilimitada, mas o carregador esvazia: revólver 6 tiros e 1,2 s de
-recarga, escopeta 2 salvas e 1,6 s, cajado 8 cargas e 1,8 s. Cada disparo/salva
+recarga, escopeta 2 salvas e 1,6 s, cajado 8 cargas e 1,8 s, lâmina 3 cargas e
+1 s, lança-granadas 3 cargas e 1,65 s, pistolas 20 tiros e 1,5 s. Cada disparo/salva
 consome uma munição, inclusive com Disparo duplo, escopeta e perfuração.
 Recarga ágil afeta a recarga; Mãos ligeiras afeta apenas a cadência.
 
@@ -105,3 +121,33 @@ começam com o carregador completo e os valores básicos da arma selecionada.
 A referência de design foi o sistema de munição e tempo de recarga por arma de
 [20 Minutes Till Dawn](https://20-minutes-till-dawn.fandom.com/wiki/Weapons).
 Os valores acima são o balanceamento inicial de Horda Sombria.
+
+## Validação dos poderes
+
+`tests/buff_audit.gd` verifica os 22 buffs em todos os níveis e monta builds com
+todos os buffs no máximo para as seis armas. Os testes conferem:
+
+- Dano, cadência, projéteis extras, perfuração, capacidade e tempo de recarga.
+- Críticos e explosões com sequências aleatórias reproduzíveis.
+- Dano triplo por disparo/salva, ricochetes e limites da corrente elétrica.
+- Fogo/veneno simultâneos, renovação sem acumular pilhas e expiração da lentidão.
+- Quantidade, dano e intervalo de contato dos orbes.
+- Velocidade, coleta real de almas, cura por aquisição e por abates, limites de
+  vida, bloqueio/recarga do escudo e dano/empurrão da vingança.
+- Pacto somado ao dano, custo de vida, combinações entre poderes, pausa e
+  recompensas únicas de mortes em cadeia por explosões.
+
+A regressão de perfuração cria os alvos em ordem inversa à trajetória: o tiro
+deve atingir os mais próximos primeiro, independentemente da ordem de criação.
+As colisões continuam sendo verificadas pelas formas nativas das hurtboxes.
+`tests/new_weapons.gd` cobre os comportamentos próprios da lâmina, das granadas
+e das pistolas. A lâmina pode atingir um alvo uma vez na ida e uma vez na volta;
+perfuração aumenta o número de alvos em cada trecho. Granadas aplicam os efeitos
+de impacto em área, sem repetir dano no mesmo alvo para a mesma granada;
+perfuração permite continuar e ricochetes reduzem o dano das próximas explosões.
+Cada tiro alternado das pistolas conta como um disparo, sem duplicar gatilhos.
+`tests/upgrade_cards.gd` verifica as cores e os rótulos das cartas de todos os
+buffs, em cada evolução, e as escolhas reais por XP e por baús.
+
+Essas verificações validam regras e efeitos de combate; a sensação e o
+balanceamento no celular ainda dependem de partidas de teste.

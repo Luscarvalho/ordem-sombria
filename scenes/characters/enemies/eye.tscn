@@ -23,7 +23,7 @@ max_hp = 48.0
 speed = 54.0
 damage = 12.0
 radius = 17.0
-xp = 5
+xp = 6
 
 [node name="CollisionShape2D" parent="." index="0"]
 shape = SubResource("Capsule_body")

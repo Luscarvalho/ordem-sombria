@@ -13,6 +13,7 @@ var respite := 0.0
 var hostile_bullets: Array[Dictionary] = []
 var summons: Array[Dictionary] = []
 var neighbors: Dictionary = {}
+var spawn_sectors: Array[int] = []
 
 func _init(host: Node2D) -> void:
 	game = host
@@ -28,6 +29,7 @@ func reset() -> void:
 	hostile_bullets.clear()
 	summons.clear()
 	neighbors.clear()
+	spawn_sectors.clear()
 
 func announce(title: String, hint: String, duration: float = 3.0) -> void:
 	announcement = title
@@ -44,38 +46,69 @@ func update(delta: float) -> void:
 	var due := floori(game.boss_clock / Waves.BOSS_INTERVAL)
 	if game.elapsed >= game.boss_clock - 5.0 and warned_boss < due:
 		warned_boss = due
-		announce("UMA PRESENÇA SE APROXIMA", "Prepare-se: o chefe chega em 5 segundos.", 5.0)
+		game.attract_all_experience()
+		game.spawn_clock = maxf(game.spawn_clock, 5.0)
+		announce("UMA PRESENÇA SE APROXIMA", "Almas atraídas. O chefe chega em 5 segundos.", 5.0)
 	if game.elapsed >= game.boss_clock:
 		boss_number = due
 		spawn_boss(boss_number)
 		game.boss_clock += Waves.BOSS_INTERVAL
 	game.spawn_clock -= delta
 	if game.spawn_clock <= 0:
-		var spec: Dictionary = Waves.PHASES[phase]
-		var pack: int = spec.pack
-		var interval: float = spec.interval
-		var cap: int = spec.cap
-		if current_boss() != null:
-			pack = maxi(1, pack / 2)
-			interval *= 1.65
-		if respite > 0.0:
-			pack = 1
-			interval *= 2.5
-		var direction: float = game.rng.randf() * TAU
-		for i in range(pack):
-			if game.enemies.size() >= mini(cap, Waves.MAX_ENEMIES):
-				break
-			# A small pack approaches from one direction instead of appearing on top of the player.
-			var distance: float = game.get_viewport_rect().size.length() * 0.55 + game.rng.randf_range(35, 85)
-			var point: Vector2 = game.player.position + Vector2.from_angle(direction + (i - (pack-1)*0.5)*0.11) * distance
-			game._spawn_enemy(choose_type(), point)
-		var phase_age: float = game.elapsed - float(spec.at)
-		game.spawn_clock = interval * lerpf(1.0, 0.80, minf(1.0, phase_age / 60.0))
+		_spawn_wave(Waves.PHASES[phase])
+	_index_neighbors()
+
+func _spawn_wave(spec: Dictionary) -> void:
+	var pressure := 0
+	var common := 0
+	for enemy in game.enemies:
+		if enemy.hp > 0 and not enemy.brain.get("boss", false):
+			common += 1
+			if enemy.position.distance_squared_to(game.player.position) < Waves.PRESSURE_RADIUS * Waves.PRESSURE_RADIUS:
+				pressure += 1
+	if pressure >= Waves.PRESSURE_LIMIT:
+		game.spawn_clock = Waves.PRESSURE_RETRY
+		return
+	var pack: int = spec.pack
+	var interval: float = spec.interval
+	var cap: int = spec.cap
+	if current_boss() != null:
+		pack = 1
+		interval *= 2.2
+		cap = mini(cap, Waves.BOSS_HORDE_CAP)
+	if respite > 0.0:
+		pack = 1
+		interval *= 2.5
+	for member in range(pack):
+		if common >= cap or game.enemies.size() >= Waves.MAX_ENEMIES:
+			break
+		game._spawn_enemy(choose_type())
+		common += 1
+	var phase_age: float = game.elapsed - float(spec.at)
+	game.spawn_clock = interval * lerpf(1.0, 0.80, minf(1.0, phase_age / 60.0))
+
+func spawn_position(radius: float) -> Vector2:
+	if spawn_sectors.is_empty():
+		for sector in range(Waves.SPAWN_SECTORS):
+			spawn_sectors.append(sector)
+		for index in range(spawn_sectors.size() - 1, 0, -1):
+			var other: int = game.rng.randi_range(0, index)
+			var previous := spawn_sectors[index]
+			spawn_sectors[index] = spawn_sectors[other]
+			spawn_sectors[other] = previous
+	var sector: int = spawn_sectors.pop_back()
+	var angle: float = (sector + 0.5 + game.rng.randf_range(-0.22, 0.22)) * TAU / Waves.SPAWN_SECTORS
+	var direction := Vector2.from_angle(angle)
+	var half: Vector2 = game.get_viewport_rect().size / game.camera.zoom * 0.5
+	var edge := minf(half.x / maxf(absf(direction.x), 0.001), half.y / maxf(absf(direction.y), 0.001))
+	return game.player.position + direction * (edge + Waves.SPAWN_MARGIN + radius)
+
+func _index_neighbors() -> void:
 	neighbors.clear()
 	for enemy in game.enemies:
 		if enemy.hp <= 0:
 			continue
-		var cell := Vector2i(floori(enemy.position.x / 64.0), floori(enemy.position.y / 64.0))
+		var cell := Vector2i(floori(enemy.position.x / Waves.NEIGHBOR_CELL), floori(enemy.position.y / Waves.NEIGHBOR_CELL))
 		if not neighbors.has(cell):
 			neighbors[cell] = []
 		neighbors[cell].append(enemy)
@@ -111,6 +144,7 @@ func setup(enemy: Node2D, type: int) -> void:
 		enemy.brain.title = "COLOSSO DAS CINZAS"
 
 func spawn_boss(number: int) -> Node2D:
+	game.attract_all_experience()
 	game.boss_arena.begin(game.player.position)
 	var scene: PackedScene = game.MatriarchScene if number % 2 == 0 else game.EnemyScenes[3]
 	var template: CharacterBody2D = scene.instantiate()
@@ -155,12 +189,12 @@ func movement(enemy: Node2D, delta: float) -> Vector2:
 	elif role in ["charger", "boss"]:
 		desired = _charge_or_boss(enemy, direction, distance, delta)
 	if b.windup <= 0.0 and b.charge <= 0.0 and desired.length_squared() > 0.0 and desired.length() <= enemy.speed * 1.5:
-		desired = (desired + _separation(enemy) * enemy.speed * 0.8).limit_length(enemy.speed * 1.08)
+		desired = (desired + _separation(enemy) * enemy.speed * Waves.SEPARATION_STRENGTH).limit_length(enemy.speed * 1.08)
 		desired = game.obstacles.steer(enemy, desired)
 	return desired
 
 func _separation(enemy: Node2D) -> Vector2:
-	var cell := Vector2i(floori(enemy.position.x / 64.0), floori(enemy.position.y / 64.0))
+	var cell := Vector2i(floori(enemy.position.x / Waves.NEIGHBOR_CELL), floori(enemy.position.y / Waves.NEIGHBOR_CELL))
 	var result := Vector2.ZERO
 	for x in range(-1,2):
 		for y in range(-1,2):
@@ -169,11 +203,11 @@ func _separation(enemy: Node2D) -> Vector2:
 					continue
 				var offset: Vector2 = enemy.position-other.position
 				var distance := offset.length()
-				var minimum: float = enemy.radius+other.radius+3.0
+				var minimum: float = enemy.radius+other.radius+Waves.SEPARATION_GAP
 				if distance < minimum:
 					var away := offset / distance if distance > 0.01 else Vector2.from_angle(fposmod(enemy.get_instance_id()*0.73,TAU))
 					result += away * (1.0-distance/minimum)
-	return result.limit_length(1.5)
+	return result.limit_length(2.0)
 
 func _visible(enemy: Node2D) -> bool:
 	var half: Vector2 = game.get_viewport_rect().size / game.camera.zoom * 0.5 - Vector2(30, 36)

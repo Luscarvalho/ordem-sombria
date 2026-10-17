@@ -1,15 +1,21 @@
 extends RefCounted
 ## Balance and descriptions live here so new weapons/upgrades need no UI changes.
 
-# Leave more combat time between upgrade choices, especially early in a run.
-const FIRST_LEVEL_XP := 40
-const LEVEL_XP_GROWTH := 1.35
-const LEVEL_XP_FLAT := 10
+const FIRST_LEVEL_XP := 18
+const LEVEL_XP_GROWTH := 1.25
+const LEVEL_XP_FLAT := 6
+const BASE_PICKUP_RADIUS := 110.0
+const GEM_ATTRACTION_SPEED := 560.0
+const MAX_EXPERIENCE_ORBS := 240
+const STARTER_COMBAT_UPGRADES: Array[String] = ["damage", "attack", "projectile", "pierce", "ember", "poison", "lightning", "orbs", "ricochet"]
 
 const WEAPONS := {
 	"revolver": {"title": "REVÓLVER", "tag": "PRECISÃO", "description": "Tiros fortes e certeiros.\nAlcance médio-longo.", "range": 300.0, "range_label": "MÉDIO-LONGO", "damage": 24.0, "interval": 0.48, "ammo": 6, "reload_time": 1.2, "pellets": 1, "pierce": 0, "spread": 0.0, "speed": 660.0, "color": Color("f4bd72")},
 	"shotgun": {"title": "ESCOPETA", "tag": "CURTA DISTÂNCIA", "description": "Cinco projéteis em leque.\nMuito forte de perto.", "range": 160.0, "range_label": "CURTO", "damage": 12.0, "interval": 0.95, "ammo": 2, "reload_time": 1.6, "pellets": 5, "pierce": 0, "spread": 0.15, "speed": 510.0, "color": Color("ef916e")},
 	"wand": {"title": "CAJADO", "tag": "MAGIA", "description": "Magia de alcance médio.\nAtravessa dois inimigos.", "range": 240.0, "range_label": "MÉDIO", "damage": 15.0, "interval": 0.34, "ammo": 8, "reload_time": 1.8, "pellets": 1, "pierce": 1, "spread": 0.0, "speed": 470.0, "color": Color("81d8c6")},
+	"return_blade": {"title": "LÂMINA DO RETORNO", "tag": "IDA E VOLTA", "description": "Atravessa inimigos e retorna.\nPode acertar de novo na volta.", "range": 250.0, "range_label": "MÉDIO", "damage": 20.0, "interval": 0.75, "ammo": 3, "reload_time": 1.0, "pellets": 1, "pierce": 1, "spread": 0.0, "speed": 400.0, "mode": "return", "lifetime": 3.5, "color": Color("b9a4e8")},
+	"grenade_launcher": {"title": "LANÇA-GRANADAS", "tag": "DANO EM ÁREA", "description": "Granadas explodem ao atingir.\nA explosão não fere a caçadora.", "range": 280.0, "range_label": "MÉDIO-LONGO", "damage": 52.0, "interval": 1.15, "ammo": 3, "reload_time": 1.65, "pellets": 1, "pierce": 0, "spread": 0.0, "speed": 320.0, "mode": "grenade", "blast_radius": 60.0, "lifetime": 1.0, "color": Color("eea477")},
+	"dual_pistols": {"title": "PISTOLAS GÊMEAS", "tag": "RAJADA ALTERNADA", "description": "Alterna as duas pistolas.\nTiros rápidos, carregador maior.", "range": 230.0, "range_label": "MÉDIO", "damage": 9.0, "interval": 0.14, "ammo": 20, "reload_time": 1.5, "pellets": 1, "pierce": 0, "spread": 0.0, "speed": 720.0, "color": Color("e8cb83")},
 }
 
 static func weapon_stats(id: String) -> Array[Dictionary]:
@@ -18,10 +24,10 @@ static func weapon_stats(id: String) -> Array[Dictionary]:
 		{"label": "DANO / PROJÉTIL", "value": str(roundi(weapon.damage))},
 		{"label": "DISPAROS / SEG", "value": ("%.2f" % (1.0 / weapon.interval)).replace(".", ",")},
 		{"label": "ALCANCE", "value": "%d u" % weapon.range},
-		{"label": "CARGAS" if id == "wand" else "CARREGADOR", "value": str(weapon.ammo)},
-		{"label": "RECARGA", "value": ("%.1f s" % weapon.reload_time).replace(".", ",")},
+		{"label": "CARGAS" if id in ["wand", "return_blade"] else "CARREGADOR", "value": str(weapon.ammo)},
+		{"label": "RECARGA", "value": ("%.2f s" % weapon.reload_time).replace(".", ",")},
 		{"label": "PROJÉTEIS", "value": str(weapon.pellets)},
-		{"label": "PERFURAÇÃO", "value": "+%d %s" % [weapon.pierce, "alvo" if weapon.pierce == 1 else "alvos"]},
+		{"label": "EXPLOSÃO" if weapon.get("mode", "bullet") == "grenade" else "PERFURAÇÃO", "value": "%d u" % weapon.blast_radius if weapon.get("mode", "bullet") == "grenade" else "+%d %s" % [weapon.pierce, "alvo" if weapon.pierce == 1 else "alvos"]},
 	]
 
 const UPGRADES := [
@@ -96,11 +102,11 @@ static func upgrade_preview(id: String, current: int, context: Dictionary = {}) 
 const REGIONS := [Rect2(20, 380, 300, 370), Rect2(380, 525, 310, 235), Rect2(710, 335, 290, 415), Rect2(1035, 320, 400, 440), Rect2(1440, 115, 540, 645)]
 const HEIGHTS := [60.0, 33.0, 52.0, 66.0, 96.0, 48.0]
 const ENEMIES := [
-	{"name": "Aranha", "art": 1, "role": "melee", "hp": 30.0, "speed": 56.0, "damage": 10.0, "xp": 2, "radius": 13.0},
-	{"name": "Olho vigia", "art": 2, "role": "shooter", "hp": 48.0, "speed": 54.0, "damage": 12.0, "xp": 5, "radius": 17.0},
-	{"name": "Fera", "art": 3, "role": "charger", "hp": 90.0, "speed": 78.0, "damage": 16.0, "xp": 7, "radius": 18.0},
+	{"name": "Aranha", "art": 1, "role": "melee", "hp": 30.0, "speed": 56.0, "damage": 10.0, "xp": 3, "radius": 13.0},
+	{"name": "Olho vigia", "art": 2, "role": "shooter", "hp": 48.0, "speed": 54.0, "damage": 12.0, "xp": 6, "radius": 17.0},
+	{"name": "Fera", "art": 3, "role": "charger", "hp": 90.0, "speed": 78.0, "damage": 16.0, "xp": 9, "radius": 18.0},
 	{"name": "Colosso das cinzas", "art": 4, "role": "boss", "hp": 1600.0, "speed": 38.0, "damage": 24.0, "xp": 100, "radius": 32.0},
-	{"name": "Aranha veloz", "art": 1, "role": "runner", "hp": 20.0, "speed": 88.0, "damage": 8.0, "xp": 2, "radius": 11.0},
-	{"name": "Aranha de carapaça", "art": 1, "role": "armored", "hp": 105.0, "speed": 41.0, "damage": 15.0, "xp": 5, "radius": 17.0},
-	{"name": "Cuspidor de veneno", "art": 5, "role": "spitter", "hp": 82.0, "speed": 45.0, "damage": 12.0, "xp": 7, "radius": 17.0},
+	{"name": "Aranha veloz", "art": 1, "role": "runner", "hp": 20.0, "speed": 88.0, "damage": 8.0, "xp": 3, "radius": 11.0},
+	{"name": "Aranha de carapaça", "art": 1, "role": "armored", "hp": 105.0, "speed": 41.0, "damage": 15.0, "xp": 8, "radius": 17.0},
+	{"name": "Cuspidor de veneno", "art": 5, "role": "spitter", "hp": 82.0, "speed": 45.0, "damage": 12.0, "xp": 10, "radius": 17.0},
 ]

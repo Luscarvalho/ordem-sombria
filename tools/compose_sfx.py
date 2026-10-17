@@ -29,6 +29,17 @@ def render(name, duration):
             phase += 2 * pi * (730 * exp(-7 * t) + 180) / RATE
             value = (sin(phase) + 0.24 * sin(phase * 2)) * exp(-16 * t) * 0.62
             value += filtered_noise * exp(-35 * t) * 0.15
+        elif name == "return_blade":
+            phase += 2 * pi * (540 * exp(-8 * t) + 230) / RATE
+            value = sin(phase) * exp(-18 * t) * 0.35 + filtered_noise * sin(pi * min(1, t / duration)) * 0.65
+        elif name == "grenade_launcher":
+            value = sin(2 * pi * (60 * t + 70 * (1 - exp(-35 * t)) / 35)) * exp(-22 * t) * 0.7
+            value += filtered_noise * exp(-32 * t) * 0.5
+        elif name == "dual_pistols":
+            value = sin(2 * pi * 170 * t) * exp(-55 * t) * 0.4 + noise * exp(-95 * t) * 0.65
+        elif name == "grenade_blast":
+            value = sin(2 * pi * (35 * t + 55 * (1 - exp(-16 * t)) / 16)) * exp(-12 * t) * 0.65
+            value += filtered_noise * exp(-10 * t) * 1.2
         elif name in ("reload_start", "reload_end"):
             value = 0.0
             for start in (0.0, 0.055 if name == "reload_start" else 0.08):
@@ -71,5 +82,6 @@ def render(name, duration):
 
 if __name__ == "__main__":
     for name, duration in [("revolver", 0.16), ("shotgun", 0.30), ("wand", 0.24),
+                           ("return_blade", 0.24), ("grenade_launcher", 0.22), ("dual_pistols", 0.11), ("grenade_blast", 0.38),
                            ("enemy_hit", 0.085), ("player_hurt", 0.32), ("shield_block", 0.20), ("level_up", 0.55), ("reload_start", 0.16), ("reload_end", 0.20)]:
         render(name, duration)

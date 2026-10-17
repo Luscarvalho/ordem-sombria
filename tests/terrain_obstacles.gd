@@ -29,6 +29,22 @@ func run_checks() -> void:
 			if selected.is_empty() and data.position.length()>400 and not hit.obstacle.is_empty() and hit.obstacle.cell==cell:
 				selected=data
 	assert(kinds.size()==3 and not selected.is_empty())
+	var populated := 0
+	var previous_populated := 0
+	for x in range(10,51):
+		for y in range(10,51):
+			var random := RandomNumberGenerator.new()
+			random.seed = (x*73856093) ^ (y*19349663) ^ 813337
+			var roll := random.randf()
+			if roll < 0.76:
+				previous_populated += 1
+			var data := other.obstacle_at(Vector2i(x,y))
+			if data.is_empty(): continue
+			populated += 1
+			assert(roll < Terrain.SPAWN_CHANCE)
+			var previous_position := (Vector2(x,y)+Vector2.ONE*0.5)*Terrain.CELL+Vector2(random.randf_range(-56,56),random.randf_range(-56,56))
+			assert(data.position == previous_position.round(), "Lower density relocates surviving obstacles")
+	assert(populated > previous_populated*0.40 and populated < previous_populated*0.55, "Obstacle reduction is not close to half the previous density")
 	other.free()
 	var center: Vector2=selected.position
 	var start:=center-Vector2(90,0)
@@ -39,7 +55,8 @@ func run_checks() -> void:
 	await physics_frame
 	game.player.move_with_velocity(Vector2(108000, 0))
 	var stopped: Vector2 = game.player.position
-	assert(absf(stopped.x-(center.x-combined))<0.5 and absf(stopped.y-center.y)<0.01, "Native sweep ended at %s; expected %s" % [stopped, center - Vector2(combined, 0)])
+	assert(game.player.get_slide_collision_count() > 0 and game.player.get_slide_collision(0).get_collider() == terrain.collision_cells[selected.cell])
+	assert(stopped.x > start.x and stopped.x <= center.x-combined+0.5 and absf(stopped.y-center.y)<0.01, "Native sweep failed to stop before the obstacle: %s" % stopped)
 	assert(clear_of_terrain(terrain,stopped,12))
 	var sliding_start:=center-Vector2(combined+0.1,15)
 	game.player.position = sliding_start
@@ -99,5 +116,5 @@ func run_checks() -> void:
 	assert(game.actors.y_sort_enabled and terrain.visible_cells.values()[0].get_parent()==game.actors)
 	game.queue_free()
 	await process_frame
-	print("PASS: deterministic pixel props, clear spawn, continuous collision, wall sliding, actual player/enemy movement, pursuit around cover, blocked aim/projectiles, safe spawns, bounded streaming and actor depth sorting")
+	print("PASS: approximately half the previous obstacle density, preserved prop positions, deterministic pixel props, clear spawn, continuous collision, wall sliding, actual player/enemy movement, pursuit around cover, blocked aim/projectiles, safe spawns, bounded streaming and actor depth sorting")
 	quit()

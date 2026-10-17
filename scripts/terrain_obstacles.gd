@@ -1,6 +1,7 @@
 extends Node2D
 ## Deterministic world obstacles. Visuals share actor Y sorting; geometry exists offscreen too.
 const CELL := 240.0
+const SPAWN_CHANCE := 0.36
 const MAX_RADIUS := 27.0
 const SPAWN_CLEARANCE := 220.0
 const ART_SIZE := Vector2i(40,48)
@@ -25,7 +26,7 @@ func obstacle_at(cell: Vector2i) -> Dictionary:
 	var random := RandomNumberGenerator.new()
 	random.seed = (cell.x*73856093) ^ (cell.y*19349663) ^ 813337
 	var data := {}
-	if random.randf()<0.76:
+	if random.randf()<SPAWN_CHANCE:
 		var point := (Vector2(cell)+Vector2.ONE*0.5)*CELL+Vector2(random.randf_range(-56,56),random.randf_range(-56,56))
 		var kind := random.randi_range(0,2)
 		var radius := [25.0,19.0,18.0][kind] as float

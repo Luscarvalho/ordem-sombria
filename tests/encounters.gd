@@ -1,5 +1,6 @@
 extends SceneTree
 const Waves = preload("res://scripts/encounter_data.gd")
+const Data = preload("res://scripts/game_data.gd")
 
 func _initialize() -> void:
 	call_deferred("run_checks")
@@ -10,7 +11,7 @@ func run_checks() -> void:
 	game.set_physics_process(false)
 	game.start_run("revolver")
 	game.spawn_clock = 999
-	assert(game.boss_clock == 300.0 and game.next_level == 40)
+	assert(game.boss_clock == 300.0 and game.next_level == Data.FIRST_LEVEL_XP)
 	# Natural spawns unlock slowly, never by just making every old enemy tougher.
 	for time in [0.0, 29.99, 30.0, 59.99, 60.0, 104.99, 105.0, 119.99, 120.0, 179.99, 180.0, 239.99, 240.0]:
 		game.elapsed = time
@@ -29,11 +30,12 @@ func run_checks() -> void:
 	game.spawn_clock = 0
 	game.encounters.update(0.01)
 	assert(game.enemies.size() == 2 and game.enemies.all(func(e): return e.enemy_type == 0))
-	while game.enemies.size() < 44:
+	var cap: int = Waves.PHASES[1].cap
+	while game.enemies.size() < cap:
 		game._spawn_enemy(0)
 	game.spawn_clock = 0
 	game.encounters.update(0.01)
-	assert(game.enemies.size() == 44)
+	assert(game.enemies.size() == cap)
 	# Ranged population limits avoid an early wall of hostile projectiles.
 	game.start_run("revolver")
 	game.elapsed = 120

@@ -14,6 +14,9 @@ const WEAPONS := {
 	"revolver": {"grip": Vector2(5, 12), "muzzle": Vector2(30, 5), "scale": 0.65, "rotation": 0.0},
 	"shotgun": {"grip": Vector2(7, 10), "muzzle": Vector2(31, 5), "scale": 0.85, "rotation": 0.0},
 	"wand": {"grip": Vector2(5, 17), "muzzle": Vector2(18, 4), "scale": 0.95, "rotation": PI / 4.0},
+	"return_blade": {"grip": Vector2(9, 16), "muzzle": Vector2(27, 7), "scale": 0.8, "rotation": 0.0},
+	"grenade_launcher": {"grip": Vector2(7, 13), "muzzle": Vector2(31, 6), "scale": 0.85, "rotation": 0.0},
+	"dual_pistols": {"grip": Vector2(5, 10), "muzzle": Vector2(25, 5), "second_muzzle": Vector2(29, 15), "scale": 0.75, "rotation": 0.0},
 }
 
 static func source_hand(body: AnimatedSprite2D) -> Vector2:

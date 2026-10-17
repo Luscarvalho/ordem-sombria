@@ -15,6 +15,10 @@ repete a faixa inteira e faz transição suave entre menu e partida.
 ## Efeitos de combate
 
 `revolver.wav`, `shotgun.wav` e `wand.wav` têm timbres distintos para cada arma.
+`return_blade.wav`, `grenade_launcher.wav` e `dual_pistols.wav` acrescentam,
+respectivamente, um sopro metálico, uma ejeção grave e um disparo curto.
+`grenade_blast.wav` é a explosão de 380 ms das granadas. Todos usam a mesma
+síntese original, o pool de vozes e o controle de volume dos efeitos.
 `enemy_hit.wav` é o impacto curto nos inimigos; `player_hurt.wav` indica dano
 sofrido; `shield_block.wav` é o bloqueio cristalino do escudo. Durações de 85 a
 320 ms, PCM mono de 16 bits a 22050 Hz, sem loop.

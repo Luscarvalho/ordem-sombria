@@ -8,7 +8,7 @@ func run_checks() -> void:
 	var game = load("res://main.tscn").instantiate()
 	root.add_child(game)
 	game.set_physics_process(false)
-	var grips := {"revolver": Vector2(5, 12), "shotgun": Vector2(7, 10), "wand": Vector2(5, 17)}
+	var grips := {"revolver": Vector2(5, 12), "shotgun": Vector2(7, 10), "wand": Vector2(5, 17), "return_blade": Vector2(9, 16), "grenade_launcher": Vector2(7, 13), "dual_pistols": Vector2(5, 10)}
 	for weapon in grips:
 		game.start_run(weapon)
 		var actor = game.player

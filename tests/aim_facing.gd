@@ -19,7 +19,7 @@ func run_checks() -> void:
 		{"target": Vector2(1, 1).normalized(), "inputs": ["move_up", "move_left"], "animation": &"walk_down_diagonal", "flip": false},
 		{"target": Vector2(-1, 1).normalized(), "inputs": ["move_up", "move_right"], "animation": &"walk_down_diagonal", "flip": true},
 	]
-	for weapon in ["revolver", "shotgun", "wand"]:
+	for weapon in game.Data.WEAPONS:
 		for scenario in cases:
 			game.start_run(weapon)
 			game.spawn_clock = 999

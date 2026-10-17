@@ -20,7 +20,7 @@ func run_checks() -> void:
 	var game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	game.set_physics_process(false)
-	for id in ["revolver","shotgun","wand"]:
+	for id in Data.WEAPONS:
 		var enemy=target_for(game,id)
 		var cycle=game.weapon_cycle
 		assert(cycle.ammo==Data.WEAPONS[id].ammo and not game.reload_weapon())
@@ -127,5 +127,5 @@ func run_checks() -> void:
 	assert(game.weapon_cycle.capacity==2 and game.weapon_cycle.ammo==2 and game.weapon_cycle.reload_duration==1.6)
 	game.queue_free()
 	await process_frame
-	print("PASS: three magazine sizes, one ammo per volley, empty/manual/idle reload, no shots during reload, R/HUD controls, wrist animation, automatic resumption, free movement, pause/cards, ammo/reload buffs, preserved progress and clean reset")
+	print("PASS: six weapon magazines, one ammo per volley, empty/manual/idle reload, no shots during reload, R/HUD controls, wrist animation, automatic resumption, free movement, pause/cards, ammo/reload buffs, preserved progress and clean reset")
 	quit()

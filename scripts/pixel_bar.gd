@@ -10,13 +10,21 @@ var value := 100.0:
 		queue_redraw()
 var color := Color("d98486")
 var segments := 20
+var flat := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size.y = 14
+	if custom_minimum_size.y <= 0:
+		custom_minimum_size.y = 1 if flat else 14
 	resized.connect(queue_redraw)
 
 func _draw() -> void:
+	if flat:
+		draw_rect(Rect2(Vector2.ZERO, size), Color("32293e"))
+		var width := floorf(size.x * clampf(value / max_value, 0.0, 1.0))
+		if width > 0:
+			draw_rect(Rect2(Vector2.ZERO, Vector2(width, size.y)), color)
+		return
 	if size.y <= 8:
 		draw_rect(Rect2(Vector2.ZERO, size), Color("0e0c16"))
 		var fill := clampf(value / max_value, 0, 1)

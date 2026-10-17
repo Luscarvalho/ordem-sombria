@@ -17,7 +17,7 @@ func run_checks() -> void:
 		assert(clip.get_length() > 0.05 and clip.get_length() < 0.6)
 		assert(clip.loop_mode == AudioStreamWAV.LOOP_DISABLED)
 	assert(game.music.sfx_players.size() == 8)
-	for weapon in ["revolver", "shotgun", "wand"]:
+	for weapon in game.Data.WEAPONS:
 		game.start_run(weapon)
 		game._spawn_enemy(0)
 		game.enemies[-1].position = Vector2(100, 0)

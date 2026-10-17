@@ -7,7 +7,7 @@ const PREVIOUS_FRAMES = preload("res://assets/animations/hunter-directions-v6.tr
 const DIRECTIONS := [Vector2.RIGHT, Vector2(1,1), Vector2.DOWN, Vector2(-1,1), Vector2.LEFT, Vector2(-1,-1), Vector2.UP, Vector2(1,-1)]
 const TITLES := ["DIREITA", "BAIXO / DIREITA", "BAIXO", "BAIXO / ESQUERDA", "ESQUERDA", "CIMA / ESQUERDA", "CIMA", "CIMA / DIREITA"]
 const SHORT_TITLES := ["DIR", "BAIXO/DIR", "BAIXO", "BAIXO/ESQ", "ESQ", "CIMA/ESQ", "CIMA", "CIMA/DIR"]
-const WEAPONS := ["revolver", "shotgun", "wand", ""]
+const WEAPONS := ["revolver", "shotgun", "wand", "return_blade", "grenade_launcher", "dual_pistols", ""]
 const SPEEDS := [0.25, 0.5, 1.0, 1.5, 2.0]
 const PAPER := Color("f0dfbf")
 const MINT := Color("83c9b3")
@@ -80,7 +80,7 @@ func _build_interface() -> void:
 	var weapon := OptionButton.new()
 	weapon.focus_mode = Control.FOCUS_NONE
 	weapon.add_theme_font_size_override("font_size", 12)
-	for text in ["REVÓLVER", "ESCOPETA", "CAJADO", "SEM ARMA"]:
+	for text in ["REVÓLVER", "ESCOPETA", "CAJADO", "LÂMINA DO RETORNO", "LANÇA-GRANADAS", "PISTOLAS GÊMEAS", "SEM ARMA"]:
 		weapon.add_item(text)
 	weapon.item_selected.connect(func(index: int): set_weapon(WEAPONS[index]))
 	toolbar.add_child(weapon)

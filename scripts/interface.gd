@@ -13,9 +13,12 @@ const MUTED := Color("ac9ba9")
 const AMBER := Color("efb775")
 const MINT := Color("83c9b3")
 const ROSE := Color("d67d8a")
+const MOBILE_HUD_SCALE := 1.5
+const EVOLUTION_TINT := Color("91b8c9")
+var mobile_hud := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 var game: Node2D
 var root: Control
-var hud: MarginContainer
+var hud: Control
 var overlay: ColorRect
 var center: CenterContainer
 var content: VBoxContainer
@@ -24,15 +27,14 @@ var xp_bar: Meter
 var health_label: Label
 var level_label: Label
 var status_label: Label
-var weapon_label: Label
+var pause_button: Button
 var ammo_button: Button
 var ammo_bar: Meter
 var joystick: Control
-var footer: Label
 var screen := "home"
+var weapon_page := 0
 var settings_return := "home"
 var overlay_fade: Tween
-var encounter_label: Label
 var boss_panel: PanelContainer
 var boss_name: Label
 var boss_health: Meter
@@ -46,6 +48,8 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	_build_hud()
+	root.resized.connect(_layout_hud)
+	_layout_hud()
 	joystick = Control.new()
 	joystick.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -65,110 +69,135 @@ func _process(_delta: float) -> void:
 	joystick.queue_redraw()
 
 func _build_hud() -> void:
-	hud = MarginContainer.new()
-	hud.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	for edge in ["left", "right", "top", "bottom"]:
-		hud.add_theme_constant_override("margin_" + edge, 8)
+	hud = Control.new()
+	hud.name = "MinimalHUD"
+	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hud)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	hud.add_child(row)
-	var left := _hud_panel(row, 200)
-	var health_row := HBoxContainer.new()
-	health_row.add_theme_constant_override("separation", 4)
-	left.add_child(health_row)
-	health_row.add_child(_icon("vitality", Vector2(16, 16), ROSE))
-	health_label = _label("VIDA 100/100", 12, PAPER)
-	health_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	health_row.add_child(health_label)
-	ammo_button = _button("6/6", 10)
+	var shade := ColorRect.new()
+	shade.color = Color("17151d88")
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hud.add_child(shade)
+	xp_bar = _bar(MINT)
+	xp_bar.name = "ExperienceBar"
+	xp_bar.flat = true
+	xp_bar.custom_minimum_size.y = 4
+	xp_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	xp_bar.offset_bottom = 4
+	hud.add_child(xp_bar)
+	var left := Control.new()
+	left.name = "Vitals"
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left.position = Vector2(16, 10)
+	left.size = Vector2(156, 42)
+	hud.add_child(left)
+	var heart := _icon("vitality", Vector2(16, 16), ROSE)
+	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	heart.position = Vector2(0, 3)
+	left.add_child(heart)
+	health_bar = _bar(ROSE)
+	health_bar.flat = true
+	health_bar.custom_minimum_size = Vector2(80, 6)
+	health_bar.position = Vector2(21, 9)
+	left.add_child(health_bar)
+	health_label = _label("100", 12, PAPER)
+	health_label.position = Vector2(111, 0)
+	left.add_child(health_label)
+	ammo_button = _hud_button("6/6", 10)
 	ammo_button.name = "AmmoReloadButton"
-	ammo_button.custom_minimum_size = Vector2(56, 18)
+	ammo_button.position = Vector2(0, 19)
+	ammo_button.custom_minimum_size = Vector2(156, 44 if mobile_hud else 24)
+	ammo_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := StyleBoxEmpty.new()
+		style.content_margin_left = 72
+		ammo_button.add_theme_stylebox_override(state, style)
 	ammo_button.tooltip_text = "Recarregar: R ou clique aqui. Reserva ilimitada."
 	ammo_button.pressed.connect(game.reload_weapon)
-	health_row.add_child(ammo_button)
-	health_bar = _bar(ROSE)
-	left.add_child(health_bar)
-	health_bar.custom_minimum_size.y = 10
-	weapon_label = _label("REVÓLVER / MÉDIO-LONGO", 10, AMBER)
-	left.add_child(weapon_label)
+	left.add_child(ammo_button)
 	ammo_bar = _bar(AMBER)
 	ammo_bar.name = "AmmoBar"
-	left.add_child(ammo_bar)
-	ammo_bar.custom_minimum_size.y = 4
-	var middle := _hud_panel(row, 0)
-	middle.get_parent().get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var progress_row := HBoxContainer.new()
-	progress_row.add_theme_constant_override("separation", 12)
-	middle.add_child(progress_row)
-	level_label = _label("NÍVEL 1", 12, MINT)
-	progress_row.add_child(level_label)
-	status_label = _label("00:00 / 0 ABATES / FASE 1", 10, PAPER)
-	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	progress_row.add_child(status_label)
-	xp_bar = _bar(MINT)
-	middle.add_child(xp_bar)
-	xp_bar.custom_minimum_size.y = 10
-	encounter_label = _label("ARANHAS / BOSS 05:00", 10, AMBER)
-	encounter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	middle.add_child(encounter_label)
-	var pause := _button("II PAUSAR", 12)
-	pause.custom_minimum_size = Vector2(104, 36)
-	if DisplayServer.is_touchscreen_available():
-		pause.custom_minimum_size.y = 44
-	pause.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	pause.pressed.connect(game.toggle_pause)
-	row.add_child(pause)
-	footer = _label("WASD / SETAS   |   TIRO AUTOMÁTICO   |   R: RECARREGAR   |   P / ESC: PAUSAR", 12, MUTED)
-	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	footer.offset_top = -26
-	footer.offset_bottom = -10
-	if DisplayServer.is_touchscreen_available():
-		footer.text = "ARRASTE À ESQUERDA PARA MOVER   |   TIRO AUTOMÁTICO"
-	root.add_child(footer)
+	ammo_bar.custom_minimum_size = Vector2(62, 8)
+	ammo_bar.position = Vector2(0, 18 if mobile_hud else 8)
+	ammo_button.add_child(ammo_bar)
+	status_label = _label("00:00", 14, PAPER)
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	status_label.offset_left = -48
+	status_label.offset_right = 48
+	status_label.offset_top = 12
+	status_label.offset_bottom = 32
+	hud.add_child(status_label)
+	level_label = _label("NV 1", 12, MINT)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	level_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	level_label.offset_left = -118
+	level_label.offset_right = -58
+	level_label.offset_top = 14
+	level_label.offset_bottom = 32
+	hud.add_child(level_label)
+	pause_button = _hud_button("", 14)
+	pause_button.name = "PauseButton"
+	pause_button.tooltip_text = "Pausar: P ou Esc"
+	pause_button.custom_minimum_size = Vector2(44, 44)
+	pause_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	pause_button.offset_left = -48
+	pause_button.offset_right = -4
+	pause_button.offset_top = 4
+	pause_button.offset_bottom = 48
+	if mobile_hud:
+		for state in ["normal", "hover", "pressed"]:
+			pause_button.add_theme_stylebox_override(state, Pixel.panel(INK.lightened(0.12) if state == "hover" else INK, Color("80677d"), false))
+		pause_button.offset_left -= 8
+		pause_button.offset_right -= 8
+		level_label.offset_left -= 8
+		level_label.offset_right -= 8
+	pause_button.draw.connect(_draw_pause_icon)
+	pause_button.pressed.connect(game.toggle_pause)
+	hud.add_child(pause_button)
 	_build_encounter_hud()
+
+func _layout_hud() -> void:
+	var factor := minf(MOBILE_HUD_SCALE, maxf(1.0, root.size.x / 480.0)) if mobile_hud else 1.0
+	hud.scale = Vector2.ONE * factor
+	hud.size = Vector2(root.size.x / factor, 52)
+
+func _draw_pause_icon() -> void:
+	var origin := (pause_button.size * 0.5 - Vector2(7, 10)).floor()
+	for bar in range(2):
+		pause_button.draw_rect(Rect2(origin + Vector2(bar * 9, 0), Vector2(5, 20)), PAPER)
 
 func _build_encounter_hud() -> void:
 	boss_panel = PanelContainer.new()
 	boss_panel.name = "BossHealthPanel"
-	boss_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	boss_panel.offset_left = -260
-	boss_panel.offset_right = 260
-	boss_panel.offset_top = 76
-	boss_panel.offset_bottom = 134
+	boss_panel.anchor_left = 0.25
+	boss_panel.anchor_right = 0.75
+	boss_panel.offset_top = 56
+	boss_panel.offset_bottom = 80
 	boss_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	boss_panel.add_theme_stylebox_override("panel", Pixel.panel(INK, ROSE))
-	root.add_child(boss_panel)
+	boss_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	hud.add_child(boss_panel)
 	var column := VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 3)
 	boss_panel.add_child(column)
-	boss_name = _label("CHEFE", 16, PAPER)
+	boss_name = _label("CHEFE", 10, PAPER)
 	boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boss_name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	column.add_child(boss_name)
 	boss_health = _bar(ROSE)
+	boss_health.flat = true
 	column.add_child(boss_health)
+	boss_health.custom_minimum_size.y = 6
 	boss_panel.hide()
 
-func _hud_panel(parent: Control, width: float) -> VBoxContainer:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size.x = width
-	var style := Pixel.panel(INK, Color("665069"))
-	style.set_content_margin_all(6)
-	panel.add_theme_stylebox_override("panel", style)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(panel)
-	var margin := MarginContainer.new()
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_theme_constant_override("margin_left", 4)
-	margin.add_theme_constant_override("margin_right", 4)
-	panel.add_child(margin)
-	var column := VBoxContainer.new()
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_theme_constant_override("separation", 2)
-	margin.add_child(column)
-	return column
+func _hud_button(text: String, font_size: int) -> Button:
+	var button := _button(text, font_size)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	button.add_theme_color_override("font_color", AMBER)
+	button.add_theme_color_override("font_disabled_color", AMBER.darkened(0.15))
+	return button
 
 func _bar(color: Color) -> Meter:
 	var bar := Meter.new()
@@ -179,7 +208,6 @@ func _new_overlay(eyebrow: String, title: String, subtitle: String, title_size: 
 	_reset_overlay_fade()
 	boss_panel.hide()
 	overlay.show()
-	footer.hide()
 	for child in center.get_children():
 		center.remove_child(child)
 		child.queue_free()
@@ -239,13 +267,16 @@ func show_menu() -> void:
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(note)
 
-func show_weapon_selection() -> void:
+func show_weapon_selection(page: int = 0) -> void:
 	screen = "weapons"
 	game.state = "menu"
 	hud.hide()
-	_new_overlay("PREPARE-SE PARA A NOITE", "ESCOLHA SUA ARMA", "UMA CAÇADORA. TRÊS CAMINHOS PARA SOBREVIVER.", 32)
+	var weapons := Data.WEAPONS.keys()
+	var pages := ceili(weapons.size() / 3.0)
+	weapon_page = clampi(page, 0, pages - 1)
+	_new_overlay("PREPARE-SE PARA A NOITE", "ESCOLHA SUA ARMA", "UMA CAÇADORA. SEIS CAMINHOS PARA SOBREVIVER.", 32)
 	var row := _card_row()
-	for id in ["revolver", "shotgun", "wand"]:
+	for id in weapons.slice(weapon_page * 3, weapon_page * 3 + 3):
 		var card := _weapon_card(id)
 		card.pressed.connect(game.start_run.bind(id))
 		row.add_child(card)
@@ -253,11 +284,18 @@ func show_weapon_selection() -> void:
 	navigation.add_theme_constant_override("separation", 16)
 	content.add_child(navigation)
 	navigation.add_child(_menu_button("< VOLTAR", "BackButton", show_menu, 32))
-	var note := _label("ATRIBUTOS INICIAIS / ALCANCE EM UNIDADES DO JOGO", 12, MINT)
-	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	navigation.add_child(note)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	navigation.add_child(spacer)
+	var previous := _menu_button("< ANTERIORES", "PreviousWeaponsButton", show_weapon_selection.bind(weapon_page - 1), 36)
+	previous.disabled = weapon_page == 0
+	navigation.add_child(previous)
+	var page_label := _label("%d / %d" % [weapon_page + 1, pages], 12, MINT)
+	page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	navigation.add_child(page_label)
+	var next := _menu_button("PRÓXIMAS >", "NextWeaponsButton", show_weapon_selection.bind(weapon_page + 1), 36)
+	next.disabled = weapon_page == pages - 1
+	navigation.add_child(next)
 	call_deferred("_focus_if_visible", row.get_child(0))
 
 func show_help() -> void:
@@ -405,7 +443,10 @@ func _reset_overlay_fade() -> void:
 
 func show_pause() -> void:
 	screen = "pause"
-	_new_overlay("RESPIRE UM POUCO", "JOGO PAUSADO", "A CAÇADA ESPERA POR VOCÊ.")
+	var phase: Dictionary = game.Waves.PHASES[game.Waves.phase_index(game.elapsed)]
+	var remaining := maxi(0, ceili(game.boss_clock - game.elapsed))
+	var details := "%s / %d ABATES / NÍVEL %d / VIDA %d/%d\n%s / %s\n%s / CHEFE EM %02d:%02d" % [game.time_label(), game.kills, game.level, ceili(game.health), ceili(game.max_health), Data.WEAPONS[game.weapon_id].title, Data.WEAPONS[game.weapon_id].range_label, phase.name, remaining / 60, remaining % 60]
+	_new_overlay("RESPIRE UM POUCO", "JOGO PAUSADO", details)
 	content.add_child(_icon("magnet", Vector2(64, 64), MINT))
 	var button := _button("[ CONTINUAR ]", 24)
 	button.custom_minimum_size.y = 64
@@ -413,6 +454,9 @@ func show_pause() -> void:
 	content.add_child(button)
 	content.add_child(_menu_button("CONFIGURAÇÕES", "SettingsButton", show_settings, 48))
 	content.add_child(_menu_button("MENU PRINCIPAL", "HomeButton", game.return_to_menu, 44))
+	var controls := _label("ARRASTE À ESQUERDA PARA MOVER / TOQUE NA MUNIÇÃO PARA RECARREGAR" if mobile_hud else "WASD / SETAS: MOVER   R: RECARREGAR   P / ESC: PAUSAR", 12, MUTED)
+	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(controls)
 
 func show_death() -> void:
 	screen = "death"
@@ -433,22 +477,18 @@ func hide_overlay() -> void:
 	screen = "playing"
 	overlay.hide()
 	hud.show()
-	footer.show()
 	update_weapon_hud()
 
 func update_hud() -> void:
-	health_label.text = "VIDA %d/%d" % [ceili(game.health), ceili(game.max_health)]
+	health_label.text = "%d" % ceili(game.health)
+	health_label.tooltip_text = "Vida: %d/%d" % [ceili(game.health), ceili(game.max_health)]
 	health_bar.max_value = game.max_health
 	health_bar.value = game.health
 	xp_bar.max_value = game.next_level
 	xp_bar.value = game.experience
-	level_label.text = "NÍVEL %d" % game.level
+	level_label.text = "NV %d" % game.level
 	update_weapon_hud()
-	status_label.text = "%s / %d ABATES / FASE %d" % [game.time_label(), game.kills, 1 + game.Waves.phase_index(game.elapsed)]
-	weapon_label.text = "%s / %s" % [Data.WEAPONS[game.weapon_id].title, Data.WEAPONS[game.weapon_id].range_label]
-	var remaining := maxi(0, ceili(game.boss_clock - game.elapsed))
-	var phase: Dictionary = game.Waves.PHASES[game.Waves.phase_index(game.elapsed)]
-	encounter_label.text = "%s / BOSS %02d:%02d" % [phase.name, remaining / 60, remaining % 60]
+	status_label.text = game.time_label()
 	var boss: Node2D = game.encounters.current_boss()
 	boss_panel.visible = boss != null and game.state in ["playing", "levelup"]
 	if boss != null:
@@ -477,7 +517,7 @@ func _weapon_card(id: String) -> Button:
 	var button := _button("", 16)
 	button.name = "Weapon_" + id
 	button.tooltip_text = weapon.description + "\nPerfuração: alvos extras atingidos por cada projétil."
-	button.custom_minimum_size = Vector2(276, 352)
+	button.custom_minimum_size = Vector2(276, 376)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -490,7 +530,10 @@ func _weapon_card(id: String) -> Button:
 	column.add_theme_constant_override("separation", 6)
 	margin.add_child(column)
 	column.add_child(_label(weapon.tag, 12, weapon.color))
-	column.add_child(_label(weapon.title, 24, PAPER))
+	var title := _label(weapon.title, 20, PAPER)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size.y = 48
+	column.add_child(title)
 	var art := PanelContainer.new()
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	art.add_theme_stylebox_override("panel", Pixel.panel(Color("17121f"), weapon.color.darkened(0.55), false))
@@ -522,16 +565,26 @@ func _weapon_card(id: String) -> Button:
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(line)
 	var action := _label("[ INICIAR CAÇADA ]", 12, PAPER)
+	action.name = "StartWeaponLabel"
 	action.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(action)
 	return button
 
 func _upgrade_card(upgrade: Dictionary, current: int, index: int) -> Button:
 	var accent: Color = upgrade.color
+	var evolving := current > 0
+	var rank_color: Color = EVOLUTION_TINT if evolving else accent
 	var button := _button("", 16)
 	button.name = "Upgrade_" + upgrade.id
 	button.custom_minimum_size = Vector2(276, 372)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if evolving:
+		button.add_theme_stylebox_override("normal", Pixel.panel(Color("242e3b"), Color("779eae")))
+		button.add_theme_stylebox_override("hover", Pixel.panel(Color("2d3b4c"), EVOLUTION_TINT))
+		button.add_theme_stylebox_override("pressed", Pixel.panel(Color("344957"), MINT))
+		var focus: StyleBoxFlat = button.get_theme_stylebox("focus").duplicate()
+		focus.border_color = EVOLUTION_TINT
+		button.add_theme_stylebox_override("focus", focus)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -558,13 +611,13 @@ func _upgrade_card(upgrade: Dictionary, current: int, index: int) -> Button:
 	sprite.custom_minimum_size = Vector2(0, 64)
 	art.add_child(sprite)
 	var next: int = mini(current + 1, upgrade.max_level)
-	var level_text := "NOVO / NÍVEL 1 DE %d" % upgrade.max_level if current == 0 else "NÍVEL %d > %d / %d" % [current, next, upgrade.max_level]
-	var level_badge := _label(level_text, 12, accent)
+	var level_text := "NOVO / NÍVEL 1 DE %d" % upgrade.max_level if not evolving else "EVOLUÇÃO / %d > %d / %d" % [current, next, upgrade.max_level]
+	var level_badge := _label(level_text, 12, rank_color)
 	level_badge.name = "BuffLevel"
 	column.add_child(level_badge)
 	var pips := Meter.new()
 	pips.name = "BuffLevels"
-	pips.color = accent
+	pips.color = rank_color
 	pips.segments = upgrade.max_level
 	pips.max_value = upgrade.max_level
 	pips.value = next
@@ -633,5 +686,21 @@ func _draw_joystick() -> void:
 		return
 	var origin: Vector2 = game.touch_origin.round()
 	var stick: Vector2 = (origin + (game.touch_position - origin).limit_length(55)).round()
-	Pixel.panel(Color(0.1, 0.08, 0.15, 0.65), Color("72566f")).draw(joystick.get_canvas_item(), Rect2(origin - Vector2(60, 60), Vector2(120, 120)))
-	Pixel.panel(Color("41364c"), MINT).draw(joystick.get_canvas_item(), Rect2(stick - Vector2(20, 20), Vector2(40, 40)))
+	_draw_joystick_pad(origin, 60, Color(INK, 0.10), Color(MINT, 0.22))
+	joystick.draw_line(origin, stick, Color(MINT, 0.16), 2)
+	for direction in [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]:
+		joystick.draw_line(origin + direction * 48, origin + direction * 53, Color(MINT, 0.25), 2)
+	_draw_joystick_pad(stick, 20, Color(MINT, 0.16), Color(MINT, 0.44))
+	joystick.draw_rect(Rect2(stick - Vector2(2, 2), Vector2(4, 4)), Color(PAPER, 0.38))
+
+func _draw_joystick_pad(at: Vector2, radius: float, fill: Color, border: Color) -> void:
+	var corner := floorf(radius * 0.42)
+	var points := PackedVector2Array([
+		at + Vector2(-corner, -radius), at + Vector2(corner, -radius),
+		at + Vector2(radius, -corner), at + Vector2(radius, corner),
+		at + Vector2(corner, radius), at + Vector2(-corner, radius),
+		at + Vector2(-radius, corner), at + Vector2(-radius, -corner),
+	])
+	joystick.draw_colored_polygon(points, fill)
+	points.append(points[0])
+	joystick.draw_polyline(points, border, 2)
