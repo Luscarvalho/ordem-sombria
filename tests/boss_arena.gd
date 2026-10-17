@@ -18,44 +18,49 @@ func run_checks() -> void:
 	# Start away from world zero, so a camera-following or origin-only cage fails.
 	game.player.position=game.obstacles.safe_position(Vector2(910,650),game.player.radius)
 	var entry: Vector2=game.player.position.round()
+	game._sync_camera()
+	var camera_before: Vector2 = game.camera.position
 	var boss=game.encounters.spawn_boss(1)
 	var arena: Node2D=game.boss_arena
 	assert(arena.active and arena.visible and arena.position==entry)
 	assert(arena.contains(boss.position,boss.radius) and clear_of_props(game,boss.position,boss.radius))
 	assert(boss.position.distance_to(game.player.position)>100,"Boss spawned directly on the player")
-	assert(game.camera.zoom.x<=1 and game.camera.position!=game.player.position)
-	var camera_position: Vector2=game.camera.position
-	var zoom: Vector2=game.camera.zoom
-	var screen_center: Vector2=game.get_viewport_rect().size/2
-	var rim_top: float=screen_center.y+(entry.y-Arena.RADIUS-game.camera.position.y)*zoom.y
-	var rim_bottom: float=screen_center.y+(entry.y+Arena.RADIUS-game.camera.position.y)*zoom.y
-	assert(rim_top>140 and rim_bottom<game.get_viewport_rect().size.y-24,"HUD obscures the framed arena")
+	assert(game.camera.zoom == Vector2.ONE and game.camera.position == camera_before, "Boss arrival changed the camera scale or position")
+	assert(arena.contains(entry + Vector2(350, 0), game.player.radius), "Arena does not provide the extra dodge space")
 	# The actual player cannot leave in any direction, even at high speed/large delta.
 	for sector in range(8):
 		var angle:=sector*TAU/8
 		var direction:=Vector2.from_angle(angle)
 		game.player.position=entry
 		game.player_velocity=direction*2000
-		game._physics_process(0.3)
+		await physics_frame
+		game._physics_process(1.0/60.0)
 		assert(arena.contains(game.player.position,game.player.radius),"Player crossed the rim")
 		assert(clear_of_props(game,game.player.position,game.player.radius),"Rim pushed the player into a prop")
-		assert(arena.position==entry and game.camera.position==camera_position and game.camera.zoom==zoom,"Arena follows the player or camera")
+		assert(arena.position==entry, "Arena follows the player")
+		assert(game.camera.position == game.player.position and game.camera.zoom == Vector2.ONE, "Camera stopped following the player or changed zoom during the fight")
 	# Slide at the rim rather than stick, and retain collision against nearby terrain.
 	for sector in range(24):
 		var direction:=Vector2.from_angle(sector*TAU/24)
 		var start: Vector2=arena.fit_position(entry+direction*(Arena.RADIUS-12.2),12,game.obstacles)
-		var moved: Vector2=game.obstacles.move_actor(start,direction.orthogonal()*20,12,arena)
+		game.player.position = start
+		await physics_frame
+		game.player.move_with_velocity(direction.orthogonal() * 1200.0)
+		var moved: Vector2 = game.player.position
 		assert(arena.contains(moved,12) and clear_of_props(game,moved,12))
 	# A charge has the same boundary as the player; approaching hordes can enter from outside.
 	game.player.position=entry
 	boss.position=arena.fit_position(entry+Vector2(130,0),boss.radius,game.obstacles)
 	boss.brain.charge=5
 	boss.brain.direction=Vector2.RIGHT
-	game._update_enemies(1)
+	for tick in range(60):
+		await physics_frame
+		game._update_enemies(1.0/60.0)
 	assert(arena.contains(boss.position,boss.radius) and clear_of_props(game,boss.position,boss.radius))
 	var spider=game._spawn_enemy(0)
-	spider.position=game.obstacles.safe_position(entry+Vector2(-420,0),spider.radius)
+	spider.position=game.obstacles.safe_position(entry-Vector2(Arena.RADIUS+160,0),spider.radius)
 	for tick in range(900):
+		await physics_frame
 		game._update_enemies(1.0/60.0)
 		if arena.contains(spider.position,spider.radius): break
 	assert(arena.contains(spider.position,spider.radius),"Barrier strands all approaching hordes outside")
@@ -73,6 +78,7 @@ func run_checks() -> void:
 	# A second boss reuses the same arena; defeating just one must not reopen it.
 	var second=game.encounters.spawn_boss(2)
 	assert(arena.position==entry and arena.contains(second.position,second.radius))
+	assert(game.camera.zoom == Vector2.ONE and game.camera.position == game.player.position, "Second boss changed the camera")
 	boss.hp=0
 	game._remove_dead_enemies()
 	assert(arena.active and game.chests.size()==1)
@@ -94,5 +100,5 @@ func run_checks() -> void:
 	assert(not arena.active and game.camera.position==Vector2.ZERO)
 	game.queue_free()
 	await process_frame
-	print("PASS: fixed arena at boss arrival away from origin, confined player/charges, prop collision/sliding, incoming hordes, fixed framed camera, frozen effects, overlapping bosses, last-boss release, loot and clean reset")
+	print("PASS: larger fixed arena, unchanged camera scale at boss arrival, camera follows player during combat, confined player/charges, prop collision/sliding, incoming hordes, frozen effects, overlapping bosses, last-boss release, loot and clean reset")
 	quit()

@@ -1,4 +1,4 @@
-extends Node2D
+extends CharacterBody2D
 ## Shared frame animation, facing, idle breathing and weapon feedback.
 ## Simulation advances frames explicitly so pause/upgrade screens freeze actors.
 
@@ -7,30 +7,36 @@ const WeaponArt = preload("res://scripts/pixel_icon.gd")
 const Mount = preload("res://scripts/weapon_mount.gd")
 const ANIMATIONS := [
 	preload("res://assets/animations/hunter-final-v8.tres"),
-	preload("res://assets/animations/crawler.tres"),
-	preload("res://assets/animations/eye.tres"),
-	preload("res://assets/animations/beast.tres"),
-	preload("res://assets/animations/colossus.tres"),
-	preload("res://assets/animations/spitter.tres"),
+	preload("res://assets/animations/crawler-directions-v1.tres"),
+	preload("res://assets/animations/eye-directions-v1.tres"),
+	preload("res://assets/animations/beast-directions-v1.tres"),
+	preload("res://assets/animations/colossus-directions-v1.tres"),
+	preload("res://assets/animations/spitter-directions-v1.tres"),
 ]
 const REFERENCE_SPEEDS := [170.0, 56.0, 66.0, 96.0, 39.0, 45.0]
-var enemy_type := -1
+@export var enemy_type := -1
 var brain: Dictionary = {}
-var visual_height := 0.0
-var base_tint := Color.WHITE
-var gait_multiplier := 1.0
-var sprite: AnimatedSprite2D
-var held_weapon: Sprite2D
-var weapon_pivot: Node2D
-var gripping_hand: Sprite2D
+@export var visual_height := 0.0
+@export var base_tint := Color.WHITE
+@export var gait_multiplier := 1.0
+@onready var sprite: AnimatedSprite2D = $AnimatedBody
+@onready var held_weapon: Sprite2D = get_node_or_null("WeaponPivot/HeldWeapon")
+@onready var weapon_pivot: Node2D = get_node_or_null("WeaponPivot")
+@onready var gripping_hand: Sprite2D = get_node_or_null("GrippingHand")
+@onready var body_shape: CollisionShape2D = $CollisionShape2D
+@onready var hurtbox: Area2D = $Hurtbox
+@onready var hurt_shape: CollisionShape2D = $Hurtbox/CollisionShape2D
+@onready var contact_hitbox: Area2D = get_node_or_null("ContactHitbox")
+@onready var contact_shape: CollisionShape2D = get_node_or_null("ContactHitbox/CollisionShape2D")
 var hand_textures: Dictionary = {}
-var kind := 0
-var hp := 100.0
-var max_hp := 100.0
-var speed := 150.0
-var damage := 10.0
-var radius := 12.0
-var xp := 0
+var projectile_probe := SegmentShape2D.new()
+@export var kind := 0
+@export var hp := 100.0
+@export var max_hp := 100.0
+@export var speed := 150.0
+@export var damage := 10.0
+@export var radius := 12.0
+@export var xp := 0
 var flash := 0.0
 var burn := 0.0
 var burn_damage := 0.0
@@ -65,31 +71,38 @@ func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	phase = randf() * TAU
 	animation_clock = randf()
-	sprite = AnimatedSprite2D.new()
-	sprite.name = "AnimatedBody"
-	sprite.sprite_frames = ANIMATIONS[kind]
 	sprite.animation = "idle"
 	var canvas: Vector2 = sprite.sprite_frames.get_frame_texture("idle", 0).get_size()
 	base_scale = _height() / canvas.y
 	foot_offset = -_height() * 0.5 + 6.0
 	sprite.scale = Vector2.ONE * base_scale
 	sprite.position.y = foot_offset
-	add_child(sprite)
-	if kind == 0:
-		weapon_pivot = Node2D.new()
-		weapon_pivot.name = "WeaponPivot"
+	if is_instance_valid(weapon_pivot):
 		weapon_pivot.draw.connect(_draw_muzzle)
-		add_child(weapon_pivot)
-		held_weapon = Sprite2D.new()
-		held_weapon.name = "HeldWeapon"
-		held_weapon.centered = false
-		weapon_pivot.add_child(held_weapon)
-		gripping_hand = Sprite2D.new()
-		gripping_hand.name = "GrippingHand"
-		gripping_hand.z_index = 2
-		add_child(gripping_hand)
+
+func move_with_velocity(desired_velocity: Vector2) -> void:
+	velocity = desired_velocity
+	move_and_slide()
+	motion = get_real_velocity()
+	moving = motion.length_squared() > 16.0
+
+func touches_body(other: CharacterBody2D) -> bool:
+	if not is_instance_valid(contact_hitbox) or not contact_hitbox.monitoring or contact_shape.disabled:
+		return false
+	var other_shape: CollisionShape2D = other.get_node("CollisionShape2D")
+	if other_shape.disabled or (contact_hitbox.collision_mask & other.collision_layer) == 0:
+		return false
+	return contact_shape.shape.collide(contact_shape.global_transform, other_shape.shape, other_shape.global_transform)
+
+func intersects_projectile(from: Vector2, to: Vector2) -> bool:
+	if hurt_shape.disabled or not hurtbox.monitorable or hurtbox.collision_layer == 0:
+		return false
+	projectile_probe.a = from
+	projectile_probe.b = to
+	return hurt_shape.shape.collide(hurt_shape.global_transform, projectile_probe, Transform2D.IDENTITY)
 
 func reset_motion() -> void:
+	velocity = Vector2.ZERO
 	motion = Vector2.ZERO
 	moving = false
 	move_blend = 0.0
@@ -136,9 +149,11 @@ func animate(delta: float) -> void:
 	move_blend = lerpf(move_blend, 1.0 if moving else 0.0, 1.0 - exp(-delta * 16.0))
 	if kind == 0:
 		_update_hunter_facing(delta)
+	else:
+		_update_enemy_facing()
 	var walking := (moving and motion.length_squared() > 16.0) or kind == 2
 	var animation: StringName = "walk" if walking else "idle"
-	if kind == 0 and facing != &"side":
+	if facing != &"side":
 		animation = StringName(str(animation) + "_" + str(facing))
 	_set_body_animation(animation)
 	if walking:
@@ -168,10 +183,6 @@ func animate(delta: float) -> void:
 		sprite.scale = Vector2(1.0 + breath * 0.006 * idle, 1.0 - breath * 0.009 * idle) * base_scale
 		sprite.position = Vector2(0, foot_offset + hover - breath * 0.3 * idle)
 	sprite.modulate = Color(2.3, 1.6, 1.5) if flash > 0.0 else base_tint
-	if kind > 0 and absf(motion.x) > maxf(6.0, motion.length() * 0.22) and flip_hold <= 0.0:
-		if sprite.flip_h != (motion.x < 0):
-			sprite.flip_h = motion.x < 0
-			flip_hold = 0.18
 	_update_weapon(delta)
 	queue_redraw()
 
@@ -192,6 +203,22 @@ func _set_body_animation(animation: StringName) -> void:
 
 func _height() -> float:
 	return visual_height if visual_height > 0.0 else Data.HEIGHTS[kind]
+
+func _update_enemy_facing() -> void:
+	var direction := motion
+	if brain.get("windup", 0.0) > 0.0 and brain.has("target"):
+		direction = Vector2(brain.target) - (position + Vector2(0, -15))
+	if direction.length_squared() <= 16.0 or flip_hold > 0.0:
+		return
+	if absf(angle_difference(_facing_vector().angle(), direction.angle())) <= PI / 4.0 + deg_to_rad(8.0):
+		return
+	if absf(direction.y) > absf(direction.x):
+		facing = &"up" if direction.y < 0.0 else &"down"
+		sprite.flip_h = false
+	else:
+		facing = &"side"
+		sprite.flip_h = direction.x < 0.0
+	flip_hold = 0.18
 
 func _update_hunter_facing(delta: float) -> void:
 	var direction := Vector2.ZERO

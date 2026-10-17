@@ -34,11 +34,18 @@ func run_checks() -> void:
 	var start:=center-Vector2(90,0)
 	var combined: float=selected.radius+12.0
 	# A large displacement must stop at the first face, rather than tunnel through it.
-	var stopped: Vector2=terrain.move_actor(start,Vector2(1800,0),12)
-	assert(absf(stopped.x-(center.x-combined))<0.2 and absf(stopped.y-center.y)<0.01)
+	game.player.position = start
+	terrain.ensure_collision(start, start + Vector2(1800, 0), 12)
+	await physics_frame
+	game.player.move_with_velocity(Vector2(108000, 0))
+	var stopped: Vector2 = game.player.position
+	assert(absf(stopped.x-(center.x-combined))<0.5 and absf(stopped.y-center.y)<0.01, "Native sweep ended at %s; expected %s" % [stopped, center - Vector2(combined, 0)])
 	assert(clear_of_terrain(terrain,stopped,12))
 	var sliding_start:=center-Vector2(combined+0.1,15)
-	var slid: Vector2=terrain.move_actor(sliding_start,Vector2(30,55),12)
+	game.player.position = sliding_start
+	await physics_frame
+	game.player.move_with_velocity(Vector2(1800, 3300))
+	var slid: Vector2 = game.player.position
 	assert(slid.y>sliding_start.y+10 and clear_of_terrain(terrain,slid,12),"Diagonal input does not slide around the obstacle")
 	assert(clear_of_terrain(terrain,terrain.safe_position(center,32),32),"Boss-sized spawn stays embedded")
 	# The actual player movement and animation stop at the obstruction.
@@ -47,7 +54,9 @@ func run_checks() -> void:
 	game.invincible=100
 	game.shot_clock=999
 	Input.action_press("move_right")
-	for tick in range(90): game._physics_process(1.0/60.0)
+	for tick in range(90):
+		await physics_frame
+		game._physics_process(1.0/60.0)
 	Input.action_release("move_right")
 	assert(clear_of_terrain(terrain,game.player.position,game.player.radius))
 	assert(game.player.position.x<center.x and not game.player.moving,"Blocked player walks through the obstacle or keeps running in place")
@@ -56,6 +65,7 @@ func run_checks() -> void:
 	var pursuer=game._spawn_enemy(0)
 	pursuer.position=start
 	for tick in range(900):
+		await physics_frame
 		game._update_enemies(1.0/60.0)
 		assert(clear_of_terrain(terrain,pursuer.position,pursuer.radius),"Enemy clips an obstacle")
 		if pursuer.position.distance_to(game.player.position)<32: break

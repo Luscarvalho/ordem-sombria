@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/actor.tscn" id="1_actor"]
+
+[node name="Hunter" instance=ExtResource("1_actor")]
+speed = 170.0
+
+[node name="WeaponPivot" type="Node2D" parent="."]
+
+[node name="HeldWeapon" type="Sprite2D" parent="WeaponPivot"]
+centered = false
+
+[node name="GrippingHand" type="Sprite2D" parent="."]
+z_index = 2

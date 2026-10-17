@@ -65,12 +65,10 @@ func update(delta: float) -> void:
 		for i in range(pack):
 			if game.enemies.size() >= mini(cap, Waves.MAX_ENEMIES):
 				break
-			var enemy: Node2D = game._spawn_enemy(choose_type())
 			# A small pack approaches from one direction instead of appearing on top of the player.
 			var distance: float = game.get_viewport_rect().size.length() * 0.55 + game.rng.randf_range(35, 85)
-			enemy.position = game.player.position + Vector2.from_angle(direction + (i - (pack-1)*0.5)*0.11) * distance
-			enemy.position = game.obstacles.safe_position(enemy.position, enemy.radius)
-			enemy.reset_physics_interpolation()
+			var point: Vector2 = game.player.position + Vector2.from_angle(direction + (i - (pack-1)*0.5)*0.11) * distance
+			game._spawn_enemy(choose_type(), point)
 		var phase_age: float = game.elapsed - float(spec.at)
 		game.spawn_clock = interval * lerpf(1.0, 0.80, minf(1.0, phase_age / 60.0))
 	neighbors.clear()
@@ -107,51 +105,34 @@ func choose_type() -> int:
 func setup(enemy: Node2D, type: int) -> void:
 	var stats: Dictionary = Data.ENEMIES[type]
 	enemy.enemy_type = type
-	enemy.kind = stats.art
 	enemy.brain = {"role": stats.role, "clock": game.rng.randf_range(1.4, 2.6), "windup": 0.0, "charge": 0.0, "target": Vector2.ZERO, "direction": Vector2.RIGHT, "boss": stats.role == "boss", "enraged": false}
-	if type == 4:
-		enemy.visual_height = 28.0
-		enemy.base_tint = Color("f1bc91")
-	elif type == 5:
-		enemy.visual_height = 43.0
-		enemy.base_tint = Color("adc5e2")
-	elif stats.role == "boss":
-		enemy.visual_height = 112.0
+	if stats.role == "boss":
 		enemy.brain.archetype = "colossus"
 		enemy.brain.title = "COLOSSO DAS CINZAS"
 
 func spawn_boss(number: int) -> Node2D:
 	game.boss_arena.begin(game.player.position)
-	var boss: Node2D = game._spawn_enemy(3)
-	boss.max_hp = Data.ENEMIES[3].hp * (1.0 + 0.65 * (number - 1))
+	var scene: PackedScene = game.MatriarchScene if number % 2 == 0 else game.EnemyScenes[3]
+	var template: CharacterBody2D = scene.instantiate()
+	var base_health: float = template.max_hp
+	var base_damage: float = template.damage
+	var base_speed: float = template.speed
+	var base_xp: int = template.xp
+	var distance: float = game.BossArena.RADIUS-template.radius-24.0
+	var point: Vector2 = game.boss_arena.position+Vector2.from_angle(game.rng.randf()*TAU)*distance
+	point = game.boss_arena.fit_position(point,template.radius,game.obstacles)
+	template.free()
+	var boss: CharacterBody2D = game._spawn_enemy(0 if number % 2 == 0 else 3, point, scene)
+	boss.max_hp = base_health * (1.0 + 0.65 * (number - 1))
 	boss.hp = boss.max_hp
-	boss.damage = 24.0 + 3.0 * (number - 1)
-	boss.xp = 100 + 25 * (number - 1)
+	boss.damage = base_damage + 3.0 * (number - 1)
+	boss.xp = base_xp + 25 * (number - 1)
 	if number % 2 == 0:
-		# A different boss silhouette and moveset using the animated spider family.
-		boss.queue_free()
-		game.enemies.erase(boss)
-		boss = game.Actor.new()
-		setup(boss, 0)
 		boss.brain.role = "boss"
 		boss.brain.boss = true
 		boss.brain.archetype = "matriarch"
 		boss.brain.title = "MATRIARCA DO ENXAME"
-		boss.kind = 1
-		boss.visual_height = 94.0
-		boss.base_tint = Color("d4a5e8")
-		boss.gait_multiplier = 0.65
-		boss.max_hp = Data.ENEMIES[3].hp * (1.0 + 0.65 * (number - 1))
-		boss.hp = boss.max_hp
-		boss.damage = 22.0 + 3.0 * (number - 1)
-		boss.speed = 34.0
-		boss.radius = 32.0
-		boss.xp = 100 + 25 * (number - 1)
-		game.actors.add_child(boss)
-		game.enemies.append(boss)
-	var distance: float = game.BossArena.RADIUS-boss.radius-24.0
-	var point: Vector2 = game.boss_arena.position+Vector2.from_angle(game.rng.randf()*TAU)*distance
-	boss.position = game.boss_arena.fit_position(point,boss.radius,game.obstacles)
+		boss.speed = base_speed
 	game._sync_camera(true)
 	boss.reset_physics_interpolation()
 	announce(boss.brain.title, "CHEFE %d / Ataques marcados no chão. Prepare sua esquiva." % number, 3.5)
@@ -261,10 +242,7 @@ func flush_summons() -> void:
 		var point: Vector2 = pending.position
 		if point.distance_to(game.player.position) < 95.0:
 			point = game.player.position + game.player.position.direction_to(point) * 110
-		var enemy: Node2D = game._spawn_enemy(pending.type)
-		enemy.position = point
-		enemy.position = game.obstacles.safe_position(enemy.position, enemy.radius)
-		enemy.reset_physics_interpolation()
+		game._spawn_enemy(pending.type, point)
 	summons.clear()
 
 func shoot_fan(enemy: Node2D, target: Vector2, count: int, spread: float, speed: float, damage: float) -> void:
@@ -293,9 +271,7 @@ func update_projectiles(delta: float) -> void:
 		if blocked:
 			bullet.position = old.lerp(bullet.position, terrain_fraction)
 		bullet.life -= delta
-		var center: Vector2 = game.player.position + Vector2(0,-15)
-		var closest := Geometry2D.get_closest_point_to_segment(center, old, bullet.position)
-		if closest.distance_squared_to(center) < 11.0 * 11.0:
+		if game.player.intersects_projectile(old, bullet.position):
 			game._damage_player(bullet.damage)
 			hostile_bullets.remove_at(i)
 			if game.state == "dead":

@@ -31,16 +31,18 @@ func run_checks() -> void:
 			for action in scenario.inputs:
 				Input.action_press(action)
 			var observed := {}
-			for tick in range(120):
+			for tick in range(36):
+				await physics_frame
 				target.position = game.player.position + scenario.target * 110
+				var clock_before: float = game.player.animation_clock
 				game._physics_process(1.0 / 60.0)
 				assert(game.player.aiming, "Reachable target was lost")
 				if tick >= 20: # Smooth turns may traverse intermediate poses for up to 0.3 s.
 					assert(game.player.sprite.animation == scenario.animation, "Body faces movement instead of target: " + weapon)
 					assert(game.player.sprite.flip_h == scenario.flip)
+					assert(game.player.animation_clock < clock_before, "Opposite movement should reverse the walk cycle")
 				observed[game.player.sprite.frame] = true
 			assert(observed.size() > 1, "Backpedaling animation is static")
-			assert(game.player.animation_clock < 0, "Opposite movement should reverse the walk cycle")
 			for action in scenario.inputs:
 				Input.action_release(action)
 	# Losing the target restores movement-facing after a short shot settle.
@@ -53,10 +55,13 @@ func run_checks() -> void:
 	Input.action_press("move_down")
 	game.shot_clock = 0
 	for tick in range(12):
+		await physics_frame
 		game._physics_process(1.0 / 60.0)
 	assert(game.player.facing == &"up")
 	game.enemies[0].position = Vector2(0, -1000)
-	game._physics_process(0.30)
+	for tick in range(18):
+		await physics_frame
+		game._physics_process(1.0 / 60.0)
 	assert(not game.player.aiming and game.player.facing == &"down")
 	Input.action_release("move_down")
 	# Stationary shooting still tracks the target while the body turns smoothly.

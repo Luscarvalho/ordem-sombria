@@ -43,7 +43,52 @@ As folhas e recursos anteriores estão preservados como histórico. Os antigos
 construtores v4–v7 e o script `hunter_diagonal_gait.gd` não alteram nem integram
 o recurso ativo v8.
 
-## Fontes anteriores e monstros
+## Inimigos ativos: uma folha por família, quatro direções
+
+As cenas dos inimigos usam cinco folhas próprias, geradas com o ImageGen
+integrado a partir das identidades originais. Cada PNG tem três linhas e seis
+colunas: caminhada para a direita, para baixo e para cima. A esquerda espelha
+a direita no `AnimatedSprite2D`. Frente e costas são desenhos distintos.
+
+| Família | PNG e recurso SpriteFrames | FPS base |
+| --- | --- | --- |
+| Aranhas | `crawler-directions-v1.png` / `.tres` | 13 |
+| Olho vigia | `eye-directions-v1.png` / `.tres` | 8 |
+| Fera | `beast-directions-v1.png` / `.tres` | 8 |
+| Colosso | `colossus-directions-v1.png` / `.tres` | 4,5 |
+| Cuspidor | `spitter-directions-v1.png` / `.tres` | 7 |
+
+As aranhas normal, veloz, de carapaça e a Matriarca compartilham a folha da
+família, com seus tamanhos, cores e ritmos próprios. As velocidades de movimento,
+colisões e atributos de combate permanecem nas cenas. A caçadora mantém suas
+oito direções e a folha v8.
+
+Cada recurso tem `walk`, `walk_down`, `walk_up`, `idle`, `idle_down` e `idle_up`.
+As poses paradas usam o primeiro quadro da direção correspondente. O olho mantém
+o ciclo de flutuação mesmo parado. O controlador preserva a fase dos passos nas
+viradas, mantém a última direção em repouso e evita oscilações nas diagonais.
+Durante a preparação de um ataque, o inimigo se orienta para o alvo marcado.
+
+Os PNGs originais da geração, incluindo o alpha, são preservados sem edição.
+O construtor localiza as separações transparentes entre linhas e colunas e
+configura regiões e margens de atlas, sem alterar a imagem. Todas as direções
+de uma família têm o mesmo canvas e o mesmo FPS base.
+
+Prompts completos e referências: `enemy-directions-generation-v1.json`.
+Regiões e dimensões: `*-directions-v1-frames.json`. Reconstrução e verificação:
+
+```sh
+godot --headless --path . --script res://tools/build_enemy_directions.gd
+godot --headless --path . --script res://tests/enemy_directions.gd
+```
+
+Abra `scenes/preview/enemies/00_all_directions.tscn` com F6 para selecionar
+qualquer personagem e comparar suas direções no ritmo da partida. Os GIFs
+individuais estão em `assets/previews/characters/`, com a caçadora em oito
+direções e todos os inimigos em quatro. A captura usa as cenas e o controlador
+reais, com ciclos completos para preservar a continuidade do loop.
+
+## Fontes anteriores e monstros (histórico)
 
 Folhas geradas pela ferramenta integrada `image_gen.imagegen`, usando a prévia
 aprovada em `../characters-preview.png` como referência visual. Os prompts
@@ -109,7 +154,7 @@ reproduzido ao contrário. Sem alvo, o movimento decide a pose após um breve
 intervalo de 0,18 s do último tiro. Ao parar, a última direção é mantida.
 As direções ocupam setores de 45 graus, com histerese angular de 5 graus
 para evitar oscilações na divisão entre poses.
-Os monstros continuam com os ciclos aprovados.
+Os monstros usam os ciclos cardinais descritos acima, preservando os ritmos de cada família.
 Ainda não há ciclos próprios de morte.
 
 ### Ajuste de movimento

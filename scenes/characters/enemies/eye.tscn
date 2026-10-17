@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="1_enemy"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/eye-directions-v1.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 17.0
+height = 34.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 21.0
+height = 42.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_contact"]
+radius = 15.0
+height = 30.0
+
+[node name="Eye" instance=ExtResource("1_enemy")]
+enemy_type = 1
+kind = 2
+hp = 48.0
+max_hp = 48.0
+speed = 54.0
+damage = 12.0
+radius = 17.0
+xp = 5
+
+[node name="CollisionShape2D" parent="." index="0"]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" parent="." index="1"]
+position = Vector2(0, -20)
+scale = Vector2(0.188405797, 0.188405797)
+sprite_frames = ExtResource("2_frames")
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+shape = SubResource("Capsule_hurt")
+
+[node name="CollisionShape2D" parent="ContactHitbox" index="0"]
+shape = SubResource("Capsule_contact")

@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="1_enemy"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/crawler-directions-v1.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 13.0
+height = 26.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 17.0
+height = 34.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_contact"]
+radius = 11.0
+height = 22.0
+
+[node name="Spider" instance=ExtResource("1_enemy")]
+enemy_type = 0
+kind = 1
+hp = 30.0
+max_hp = 30.0
+speed = 56.0
+damage = 10.0
+radius = 13.0
+xp = 2
+
+[node name="CollisionShape2D" parent="." index="0"]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" parent="." index="1"]
+position = Vector2(0, -10.5)
+scale = Vector2(0.170103093, 0.170103093)
+sprite_frames = ExtResource("2_frames")
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+shape = SubResource("Capsule_hurt")
+
+[node name="CollisionShape2D" parent="ContactHitbox" index="0"]
+shape = SubResource("Capsule_contact")

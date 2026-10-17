@@ -7,6 +7,7 @@ const ART_SIZE := Vector2i(40,48)
 const ART_ANCHOR := Vector2(20,40)
 var visual_parent: Node2D
 var visible_cells := {}
+var collision_cells := {}
 var records := {}
 var textures := {}
 var focus_cell := Vector2i(999999,999999)
@@ -46,8 +47,9 @@ func follow(point: Vector2) -> void:
 			if data.is_empty(): continue
 			required[cell]=true
 			if visible_cells.has(cell): continue
+			var body := _ensure_body(data)
 			var sprite := Sprite2D.new()
-			sprite.name="TerrainObstacle_%d_%d" % [x,y]
+			sprite.name="Sprite2D"
 			sprite.texture=_texture(data.kind,data.variant)
 			sprite.centered=false
 			sprite.offset=-ART_ANCHOR
@@ -55,19 +57,48 @@ func follow(point: Vector2) -> void:
 			sprite.flip_h=data.variant%2==1
 			# Keep the flipped image centered on the same footprint.
 			sprite.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
-			sprite.position=data.position
-			visual_parent.add_child(sprite)
-			visible_cells[cell]=sprite
+			body.add_child(sprite)
+			visible_cells[cell]=body
 	for cell in visible_cells.keys():
 		if not required.has(cell):
-			var sprite: Sprite2D=visible_cells[cell]
-			visual_parent.remove_child(sprite)
+			var body: StaticBody2D=visible_cells[cell]
+			var sprite: Sprite2D=body.get_node("Sprite2D")
+			body.remove_child(sprite)
 			sprite.queue_free()
 			visible_cells.erase(cell)
 	# Bound the query cache while retaining enemy/spawn neighborhoods around the camera.
 	for cell in records.keys():
 		if absi(cell.x-center.x)>12 or absi(cell.y-center.y)>12:
 			records.erase(cell)
+	for cell in collision_cells.keys():
+		if absi(cell.x-center.x)>12 or absi(cell.y-center.y)>12:
+			var body: StaticBody2D = collision_cells[cell]
+			visual_parent.remove_child(body)
+			body.queue_free()
+			collision_cells.erase(cell)
+
+func _ensure_body(data: Dictionary) -> StaticBody2D:
+	if collision_cells.has(data.cell):
+		return collision_cells[data.cell]
+	var body := StaticBody2D.new()
+	body.name = "TerrainObstacle_%d_%d" % [data.cell.x, data.cell.y]
+	body.collision_layer = 4
+	body.collision_mask = 0
+	body.position = data.position
+	var shape := CapsuleShape2D.new()
+	shape.radius = data.radius
+	shape.height = data.radius * 2.0
+	var collider := CollisionShape2D.new()
+	collider.name = "CollisionShape2D"
+	collider.shape = shape
+	body.add_child(collider)
+	visual_parent.add_child(body)
+	collision_cells[data.cell] = body
+	return body
+
+func ensure_collision(from: Vector2, to: Vector2, radius: float) -> void:
+	for data in nearby(from, to, radius):
+		_ensure_body(data)
 
 func nearby(from: Vector2,to: Vector2,radius: float) -> Array[Dictionary]:
 	var low := cell_at(from.min(to)-Vector2.ONE*(radius+MAX_RADIUS))
@@ -113,24 +144,6 @@ func cast(from: Vector2,displacement: Vector2,radius: float=0.0) -> Dictionary:
 			var normal := (from+displacement*fraction-Vector2(data.position)).normalized()
 			result={"fraction":fraction,"normal":normal,"obstacle":data}
 	return result
-
-func move_actor(from: Vector2,displacement: Vector2,radius: float,boundary: Node2D=null) -> Vector2:
-	var point := safe_position(from,radius)
-	if boundary!=null:
-		point=boundary.fit_position(point,radius,self)
-	var remaining := displacement
-	for iteration in range(4):
-		if remaining.length_squared()<0.000001: break
-		var hit := cast(point,remaining,radius+0.03)
-		if boundary!=null:
-			var wall: Dictionary=boundary.cast_inside(point,remaining,radius+0.03)
-			if float(wall.fraction)<float(hit.fraction): hit=wall
-		point+=remaining*float(hit.fraction)
-		if hit.obstacle.is_empty(): break
-		point+=Vector2(hit.normal)*0.04
-		remaining*=1.0-float(hit.fraction)
-		remaining=remaining.slide(hit.normal)
-	return point
 
 func steer(enemy: Node2D,desired: Vector2) -> Vector2:
 	if desired.length_squared()<0.01: return desired

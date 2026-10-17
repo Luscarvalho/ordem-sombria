@@ -1,9 +1,9 @@
-[gd_resource type="SpriteFrames" format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://exccup3vo55p"]
 
-[ext_resource type="Texture2D" path="res://assets/animations/hunter-walk-v1.png" id="1_uoac1"]
-[ext_resource type="Texture2D" path="res://assets/animations/hunter-vertical-v1.png" id="2_7vruo"]
-[ext_resource type="Texture2D" path="res://assets/animations/hunter-down-diagonal-v2.png" id="3_ohjub"]
-[ext_resource type="Texture2D" path="res://assets/animations/hunter-up-diagonal-v2.png" id="4_kqawp"]
+[ext_resource type="Texture2D" uid="uid://cwvwqiw5kcspb" path="res://assets/animations/hunter-walk-v1.png" id="1_uoac1"]
+[ext_resource type="Texture2D" uid="uid://dpeg3w7locdf5" path="res://assets/animations/hunter-vertical-v1.png" id="2_7vruo"]
+[ext_resource type="Texture2D" uid="uid://t7nqqbom772t" path="res://assets/animations/hunter-down-diagonal-v2.png" id="3_ohjub"]
+[ext_resource type="Texture2D" uid="uid://g5qig7o1uuhl" path="res://assets/animations/hunter-up-diagonal-v2.png" id="4_kqawp"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cbeb4"]
 atlas = ExtResource("1_uoac1")

@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/actor.gd" id="1_actor"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/hunter-final-v8.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 12.0
+height = 24.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 11.0
+height = 22.0
+
+[node name="Actor" type="CharacterBody2D"]
+texture_filter = 1
+collision_layer = 1
+collision_mask = 12
+motion_mode = 1
+safe_margin = 0.04
+script = ExtResource("1_actor")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -24)
+scale = Vector2(0.327868852, 0.327868852)
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+
+[node name="Hurtbox" type="Area2D" parent="."]
+position = Vector2(0, -15)
+collision_layer = 16
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("Capsule_hurt")

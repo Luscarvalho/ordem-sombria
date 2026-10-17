@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="1_enemy"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/crawler-directions-v1.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 32.0
+height = 64.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 36.0
+height = 72.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_contact"]
+radius = 30.0
+height = 60.0
+
+[node name="Matriarch" instance=ExtResource("1_enemy")]
+enemy_type = 0
+kind = 1
+hp = 1600.0
+max_hp = 1600.0
+speed = 34.0
+damage = 22.0
+radius = 32.0
+xp = 100
+visual_height = 94.0
+base_tint = Color(0.831373, 0.647059, 0.909804, 1)
+gait_multiplier = 0.65
+
+[node name="CollisionShape2D" parent="." index="0"]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" parent="." index="1"]
+position = Vector2(0, -41)
+scale = Vector2(0.484536082, 0.484536082)
+sprite_frames = ExtResource("2_frames")
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+shape = SubResource("Capsule_hurt")
+
+[node name="CollisionShape2D" parent="ContactHitbox" index="0"]
+shape = SubResource("Capsule_contact")

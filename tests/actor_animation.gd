@@ -53,17 +53,21 @@ func run_checks() -> void:
 	# Acceleration and stopping must remain independent of physics frequency.
 	var distances: Array[float] = []
 	for hz in [30, 60, 120]:
+		Engine.physics_ticks_per_second = hz
 		game.start_run("revolver")
 		game.spawn_clock = 999
 		Input.action_press("move_right")
 		for tick in range(hz):
+			await physics_frame
 			game._physics_process(1.0 / hz)
 		Input.action_release("move_right")
 		for tick in range(hz / 2):
+			await physics_frame
 			game._physics_process(1.0 / hz)
 		assert(game.player_velocity == Vector2.ZERO, "Character failed to stop")
 		distances.append(game.player.position.x)
 	assert(distances.max() - distances.min() < 3, "Movement depends too much on tick rate")
+	Engine.physics_ticks_per_second = 60
 	game.start_run("wand")
 	assert(game.player.sprite.animation == "idle" and game.player.recoil == 0 and game.player_velocity == Vector2.ZERO)
 	# Vertical movement has its own front/back art and retains that idle facing.

@@ -66,10 +66,10 @@ uma seleção de buff extra, independente das melhorias por experiência.
 
 ## Arena dos chefes
 
-A chegada do primeiro chefe fecha uma barreira circular de raio 260 no local
-atual da caçadora. O centro permanece fixo no mundo e a câmera enquadra o
-círculo inteiro abaixo do HUD. O chefe nasce dentro da arena, longe da
-personagem e fora dos obstáculos. A caçadora e os chefes colidem com a borda,
+A chegada do primeiro chefe fecha uma barreira circular de raio 400 no local
+atual da caçadora. O centro permanece fixo no mundo; a câmera continua seguindo
+a personagem na escala normal, sem zoom automático. O chefe nasce dentro da
+arena, longe da personagem e fora dos obstáculos. A caçadora e os chefes colidem com a borda,
 inclusive em arrancadas; o movimento pode deslizar por ela. Os objetos do
 terreno continuam bloqueando normalmente, inclusive quando cruzam a borda.
 
@@ -78,6 +78,6 @@ atravessam a borda para fora. Os ataques continuam sujeitos aos obstáculos do
 terreno. A barreira contém os corpos e não bloqueia projéteis.
 
 Se outro chefe surgir antes da vitória, ele usa a mesma arena, com o mesmo
-centro. Só a derrota do último chefe vivo libera a passagem e restaura a câmera
-normal. Os baús continuam caindo para cada chefe derrotado. Pausa, cartas e aura
-de nível congelam a arena; reinício e retorno ao menu removem o confinamento.
+centro. Só a derrota do último chefe vivo libera a passagem. Os baús continuam
+caindo para cada chefe derrotado. Pausa, cartas e aura de nível congelam a arena;
+reinício e retorno ao menu removem o confinamento.

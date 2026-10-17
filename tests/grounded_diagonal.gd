@@ -1,10 +1,10 @@
 extends SceneTree
 ## One sheet, equal canvas/rhythm, native frames, grounded silhouettes and fist sockets.
-const Actor = preload("res://scripts/actor.gd")
+const ActorScene = preload("res://scenes/characters/hunter.tscn")
 func _initialize() -> void:
 	call_deferred("run_checks")
 func run_checks() -> void:
-	var actor := Actor.new()
+	var actor := ActorScene.instantiate()
 	root.add_child(actor)
 	actor.weapon = "revolver"
 	var frames: SpriteFrames = actor.sprite.sprite_frames
@@ -50,10 +50,10 @@ func run_checks() -> void:
 							if c.a>0.8 and c.r>0.7 and c.g>0.5 and c.b>0.4: skin+=1
 					assert(skin>8,"Socket missed the visible fist")
 				var mount: Dictionary = actor.Mount.WEAPONS[actor.weapon]
-				var grip := actor.held_weapon.to_global(mount.grip+actor.held_weapon.offset)
+				var grip: Vector2 = actor.held_weapon.to_global(mount.grip+actor.held_weapon.offset)
 				assert(grip.distance_to(actor.to_global(actor.Mount.hand_position(actor.sprite)))<0.001)
 			if not walking:
-				var transform := actor.sprite.transform
+				var transform: Transform2D = actor.sprite.transform
 				for tick in range(90):
 					actor.animate(1.0/60.0)
 					assert(actor.sprite.transform==transform)

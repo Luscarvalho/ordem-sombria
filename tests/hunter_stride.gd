@@ -1,6 +1,6 @@
 extends SceneTree
 ## Observe distinct light/occluded boot pixels, rather than trusting the frame counter.
-const Actor = preload("res://scripts/actor.gd")
+const ActorScene = preload("res://scenes/characters/hunter.tscn")
 
 func _initialize() -> void:
 	call_deferred("run_checks")
@@ -22,7 +22,7 @@ func leg_centers(texture: AtlasTexture) -> Array[Vector2]:
 	return [sums[0]/counts[0],sums[1]/counts[1]]
 
 func run_checks() -> void:
-	var actor := Actor.new()
+	var actor := ActorScene.instantiate()
 	root.add_child(actor)
 	if "--rejected-sheet" in OS.get_cmdline_user_args():
 		actor.sprite.sprite_frames = load("res://assets/animations/hunter-standard-v4.tres")

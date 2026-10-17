@@ -49,10 +49,10 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
   desviáveis. O número de atiradores simultâneos é limitado. Feras e colosso
   marcam a direção da arrancada no chão antes de avançar.
 - Ao aparecer um chefe, uma barreira fecha uma arena circular fixa no local
-  da personagem. A caçadora e os chefes não atravessam a borda; os obstáculos
-  continuam sólidos e as hordas podem entrar. A câmera enquadra a luta inteira,
-  reservando espaço para o HUD. A barreira só desaparece quando o último chefe
-  vivo é derrotado, e a câmera volta a acompanhar a personagem. Pausa e cartas
+  da personagem, com raio de 400 unidades. A caçadora e os chefes não atravessam
+  a borda; os obstáculos continuam sólidos e as hordas podem entrar. A câmera
+  continua acompanhando a personagem na escala normal, sem zoom automático.
+  A barreira só desaparece quando o último chefe vivo é derrotado. Pausa e cartas
   congelam os efeitos da arena. Reiniciar ou voltar ao menu remove a barreira.
 - Vinte e dois buffs: os oito originais, recarga/capacidade e doze efeitos (crítico, ricochete, tiro poderoso,
   gelo, veneno, explosão, raio, orbes, escudo, cura por abates, vingança e pacto).
@@ -80,6 +80,10 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
   um inimigo 25% mais próximo ganha prioridade. Alvos mortos ou fora de alcance
   são liberados imediatamente. Os monstros preservam seus seis quadros e
   ritmos próprios, respiração parada e flutuação do olho.
+- Inimigos com quatro direções: direita/esquerda, frente e costas. Cada família
+  tem uma folha transparente própria; variantes de aranha e Matriarca compartilham
+  a folha da família. Viradas preservam a fase dos passos, e a pose parada mantém
+  a última direção. A caçadora continua com suas oito direções.
 - A regressão examina os pixels das duas pernas nos contatos e nas passagens,
   além da reprodução, das solas e dos encaixes das armas. A folha v4 rejeitada
   continua falhando no teste de troca das pernas.
@@ -112,15 +116,17 @@ de derrota oferecem **Menu principal**; uma nova partida começa do nível 1.
 ## Organização
 
 - `scripts/game.gd`: partida, combate e progressão.
-- `scripts/game_data.gd`: armas, monstros, melhorias e regiões dos sprites.
+- `scripts/game_data.gd`: armas, catálogo de monstros, melhorias e regiões dos sprites.
+- `scenes/characters/hunter.tscn`: cena editável da caçadora, incluindo corpo, colisão, animações, hurtbox e arma.
+- `scenes/characters/enemies/`: cenas editáveis das sete espécies de inimigos e da Matriarca.
 - `scripts/encounter_data.gd`: cronograma, composição e limites das hordas.
 - `scripts/encounters.gd`: comportamentos, tiros inimigos, chefes e avisos.
 - `scripts/buffs.gd`: efeitos, recargas, dano elemental, escudo e orbes dos buffs.
 - `scripts/buff_icon.gd`: os 22 sprites de buffs em pixels, desenhados na interface.
 - `scripts/level_up_aura.gd`: breve celebração de nível antes da escolha de cartas.
 - `scripts/boss_chest.gd`: baú em pixels deixado pelos chefes, com coleta por proximidade.
-- `scripts/boss_arena.gd`: barreira fixa da luta, limite circular e enquadramento da câmera.
-- `scripts/actor.gd`: apresentação dos personagens e armas.
+- `scripts/boss_arena.gd`: barreira fixa da luta e limite circular.
+- `scripts/actor.gd`: corpo físico compartilhado, movimentação nativa, hitboxes, animações e armas.
 - `scripts/weapon_cycle.gd`: munição, recarga automática/manual e melhorias do carregador.
 - `scripts/weapon_mount.gd`: pontos da mão por quadro e encaixe de cada arma.
 - `scripts/arena.gd`: chão procedural decorativo.
@@ -144,6 +150,32 @@ molduras são desenhados em código sobre uma grade de pixels; não exigem conex
 
 ## Cenas para inspecionar a caçadora
 
+Para editar a personagem usada na partida, abra `scenes/characters/hunter.tscn`.
+`main.tscn` já contém uma instância dela em `Actors/Hunter`. As cenas em
+`scenes/characters/enemies/` são instanciadas pelas hordas, chefes e invocações.
+Vida, velocidade, dano, XP e ajustes visuais básicos ficam exportados no
+Inspector de cada cena; o jogo aplica os multiplicadores de progressão ao nascer.
+
+Todas herdam de `scenes/characters/actor.tscn`, com raiz `CharacterBody2D`,
+`CollisionShape2D`, `AnimatedSprite2D` e `Hurtbox` (`Area2D` com
+`CollisionShape2D`). A caçadora acrescenta `WeaponPivot/HeldWeapon` e
+`GrippingHand`; os inimigos herdam também `ContactHitbox` de `enemy.tscn`.
+As cápsulas representam a área no chão, preservando as dimensões anteriores.
+Ao editar o tamanho da colisão, mantenha o atributo `radius` coerente com a
+área ocupada para orientar a IA e o posicionamento inicial fora dos obstáculos.
+
+Durante `_physics_process`, o controlador calcula a velocidade e chama
+`move_with_velocity()` no personagem. Esse método define `velocity`, executa
+`move_and_slide()` e usa a velocidade real para sincronizar os passos.
+Arrancadas e recuos seguem esse mesmo caminho. Obstáculos usam `StaticBody2D`
+com cápsulas e a barreira dos chefes usa um `StaticBody2D` com retângulos.
+As camadas físicas estão nomeadas nas configurações do projeto.
+
+A posição de um inimigo só é definida para seu nascimento, antes de adicioná-lo
+à árvore. Reiniciar recria a caçadora na origem; inimigos muito distantes são
+substituídos por novas instâncias, preservando vida e efeitos. O deslocamento
+dos personagens, incluindo o das prévias, usa exclusivamente a física nativa.
+
 Abra `scenes/preview/cacadora/00_todas_direcoes.tscn` e use **F6** para ver as
 animações completas das oito direções em loop. A pasta também tem uma cena
 individual por direção (`01_direita.tscn` até `08_cima_direita.tscn`) e
@@ -157,6 +189,20 @@ um quadro e **R** reinicia. No Mac, F6 pode exigir Fn. Veja a lista completa em
 `scenes/preview/cacadora/README.md`.
 
 ## Verificação
+
+Folhas dos inimigos, quatro direções, espelhamento, poses paradas e continuidade
+dos passos nas viradas:
+
+```sh
+godot --headless --path . --script res://tests/enemy_directions.gd
+```
+
+Cenas nativas dos personagens, hitboxes editáveis, barreiras físicas e colisão
+em alta velocidade:
+
+```sh
+godot --headless --path . --script res://tests/native_characters.gd
+```
 
 Etapas da horda, limites, tiros anunciados, chefes a cada cinco minutos e pausa:
 
@@ -263,7 +309,8 @@ e Compatibility. A build Web ainda não foi configurada.
 ## Build Android
 
 O preset **Android** (`export_presets.cfg`) gera um APK de depuração em
-`builds/android/horda-sombria.apk`, sem `tests/`, `work/` e `scenes/preview/`.
+`builds/android/horda-sombria.apk`, sem `tests/`, `work/`, `scenes/preview/`,
+`assets/previews/` e `tools/`.
 Primeira vez no editor:
 
 1. **Editor > Gerenciar Modelos de Exportação > Baixar e Instalar** (4.7.2).

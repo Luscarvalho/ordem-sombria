@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://dfwxaousj87yb"]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="1_enemy"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/colossus-directions-v1.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 32.0
+height = 64.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 36.0
+height = 72.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_contact"]
+radius = 30.0
+height = 60.0
+
+[node name="Colossus" unique_id=1612814011 instance=ExtResource("1_enemy")]
+enemy_type = 3
+visual_height = 112.0
+kind = 4
+hp = 1600.0
+max_hp = 1600.0
+speed = 38.0
+damage = 24.0
+radius = 32.0
+xp = 100
+
+[node name="CollisionShape2D" parent="." index="0"]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" parent="." index="1"]
+position = Vector2(0, -50)
+scale = Vector2(0.3601286, 0.3601286)
+sprite_frames = ExtResource("2_frames")
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+shape = SubResource("Capsule_hurt")
+
+[node name="CollisionShape2D" parent="ContactHitbox" index="0"]
+shape = SubResource("Capsule_contact")

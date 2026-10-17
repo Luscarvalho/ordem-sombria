@@ -3,6 +3,17 @@ extends Node2D
 
 const Data = preload("res://scripts/game_data.gd")
 const Actor = preload("res://scripts/actor.gd")
+const HunterScene = preload("res://scenes/characters/hunter.tscn")
+const EnemyScenes := [
+	preload("res://scenes/characters/enemies/spider.tscn"),
+	preload("res://scenes/characters/enemies/eye.tscn"),
+	preload("res://scenes/characters/enemies/beast.tscn"),
+	preload("res://scenes/characters/enemies/colossus.tscn"),
+	preload("res://scenes/characters/enemies/runner.tscn"),
+	preload("res://scenes/characters/enemies/armored_spider.tscn"),
+	preload("res://scenes/characters/enemies/spitter.tscn"),
+]
+const MatriarchScene = preload("res://scenes/characters/enemies/matriarch.tscn")
 const Arena = preload("res://scripts/arena.gd")
 const Obstacles = preload("res://scripts/terrain_obstacles.gd")
 const BossChest = preload("res://scripts/boss_chest.gd")
@@ -24,7 +35,7 @@ var combat_visuals: Node2D
 var arena: Node2D
 var obstacles: Node2D
 var boss_arena: Node2D
-var player: Node2D
+var player: Actor
 var camera: Camera2D
 var ui: CanvasLayer
 var music: Node
@@ -34,7 +45,7 @@ var encounters: RefCounted
 var last_offers: Array[String] = []
 var tracked_target: Node2D
 var target_hold := 0.0
-var enemies: Array[Node2D] = []
+var enemies: Array[Actor] = []
 var bullets: Array[Dictionary] = []
 var gems: Array[Dictionary] = []
 var chests: Array[Node2D] = []
@@ -79,9 +90,9 @@ func _ready() -> void:
 	boss_arena = BossArena.new()
 	boss_arena.name = "BossArena"
 	add_child(boss_arena)
-	actors = Node2D.new()
-	actors.y_sort_enabled = true
-	add_child(actors)
+	actors = $Actors
+	move_child(arena, 0)
+	move_child(boss_arena, 1)
 	obstacles = Obstacles.new()
 	obstacles.name = "TerrainObstacles"
 	add_child(obstacles)
@@ -90,8 +101,7 @@ func _ready() -> void:
 	combat_visuals.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	combat_visuals.draw.connect(_draw_combat)
 	add_child(combat_visuals)
-	player = Actor.new()
-	actors.add_child(player)
+	player = $Actors/Hunter
 	player.weapon = weapon_id
 	level_up_aura = LevelUpAura.new()
 	player.add_child(level_up_aura)
@@ -105,6 +115,16 @@ func _ready() -> void:
 	add_child(ui)
 	ui.show_menu()
 	get_tree().root.focus_exited.connect(_on_focus_lost)
+
+func _reset_player() -> void:
+	actors.remove_child(player)
+	player.queue_free()
+	player = HunterScene.instantiate()
+	player.weapon = weapon_id
+	actors.add_child(player)
+	level_up_aura = LevelUpAura.new()
+	player.add_child(level_up_aura)
+	player.reset_motion()
 
 func _bind_inputs() -> void:
 	var mappings := {"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT], "move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN]}
@@ -134,10 +154,8 @@ func start_run(selected_weapon: String) -> void:
 	target_hold = 0.0
 	weapon_id = selected_weapon
 	weapon_cycle.reset(selected_weapon)
-	player.weapon = selected_weapon
-	player.position = Vector2.ZERO
+	_reset_player()
 	obstacles.follow(Vector2.ZERO)
-	player.reset_motion()
 	player_velocity = Vector2.ZERO
 	camera.position = Vector2.ZERO
 	camera.zoom = Vector2.ONE
@@ -189,8 +207,7 @@ func return_to_menu() -> void:
 	effects.clear()
 	choices.clear()
 	buffs.reset()
-	player.position = Vector2.ZERO
-	player.reset_motion()
+	_reset_player()
 	camera.position = Vector2.ZERO
 	camera.zoom = Vector2.ONE
 	camera.reset_physics_interpolation()
@@ -221,11 +238,9 @@ func _physics_process(delta: float) -> void:
 		movement = (touch_position - touch_origin).limit_length(55) / 55
 	var acceleration := 1400.0 if movement.length_squared() > 0.01 else 1800.0
 	player_velocity = player_velocity.move_toward(movement * move_speed, acceleration * delta)
-	var previous_position := player.position
-	player.position = obstacles.move_actor(player.position, player_velocity * delta, player.radius, boss_arena if boss_arena.active else null)
-	player.motion = (player.position - previous_position) / delta if delta > 0.0 else Vector2.ZERO
+	obstacles.ensure_collision(player.position, player.position + player_velocity * delta, player.radius)
+	player.move_with_velocity(player_velocity)
 	player_velocity = player.motion
-	player.moving = player.motion.length_squared() > 16.0
 	_sync_camera()
 	arena.follow(player.position)
 	obstacles.follow(player.position)
@@ -267,34 +282,24 @@ func _physics_process(delta: float) -> void:
 	combat_visuals.queue_redraw()
 
 func _sync_camera(reset: bool = false) -> void:
-	if boss_arena.active:
-		var viewport_size := get_viewport_rect().size
-		var zoom_factor := minf(1.0, minf((viewport_size.y-184)/(2*(BossArena.RADIUS+14)), (viewport_size.x-40)/(2*(BossArena.RADIUS+14))))
-		zoom_factor = maxf(0.1, zoom_factor)
-		camera.zoom = Vector2.ONE*zoom_factor
-		camera.position = boss_arena.position-Vector2(0,58.0/zoom_factor)
-	else:
-		camera.zoom = Vector2.ONE
-		camera.position = player.position
+	camera.zoom = Vector2.ONE
+	camera.position = player.position
 	if reset:
 		camera.reset_physics_interpolation()
 
-func _spawn_enemy(forced_kind: int = -1) -> Node2D:
+func _spawn_enemy(forced_kind: int = -1, spawn_point: Variant = null, scene: PackedScene = null) -> Actor:
 	var type := forced_kind
 	if type < 0:
 		type = encounters.choose_type()
-	var stats: Dictionary = Data.ENEMIES[type]
-	var enemy := Actor.new()
+	var enemy: Actor = (EnemyScenes[type] if scene == null else scene).instantiate()
 	encounters.setup(enemy, type)
-	enemy.max_hp = stats.hp * (1.0 + minf(1.5, maxf(0, elapsed - 60.0) / 1200.0))
+	enemy.max_hp *= 1.0 + minf(1.5, maxf(0, elapsed - 60.0) / 1200.0)
 	enemy.hp = enemy.max_hp
-	enemy.speed = stats.speed * minf(1.2, 1.0 + elapsed / 3600.0)
-	enemy.damage = stats.damage
-	enemy.radius = stats.radius
-	enemy.xp = stats.xp
+	enemy.speed *= minf(1.2, 1.0 + elapsed / 3600.0)
 	var distance := get_viewport_rect().size.length() * 0.55 + rng.randf_range(40, 100)
-	enemy.position = player.position + Vector2.from_angle(rng.randf() * TAU) * distance
-	enemy.position = obstacles.safe_position(enemy.position, enemy.radius)
+	var point: Vector2 = player.position + Vector2.from_angle(rng.randf() * TAU) * distance if spawn_point == null else spawn_point
+	enemy.position = obstacles.safe_position(point, enemy.radius)
+	obstacles.ensure_collision(enemy.position, enemy.position, enemy.radius)
 	actors.add_child(enemy)
 	enemy.reset_physics_interpolation()
 	enemies.append(enemy)
@@ -312,26 +317,31 @@ func _update_enemies(delta: float) -> void:
 			enemy.poison_time = maxf(0.0, enemy.poison_time - delta)
 		if enemy.hp <= 0:
 			continue
-		var direction: Vector2 = enemy.position.direction_to(player.position)
 		var slow: float = enemy.slow_factor if enemy.slow_time > 0.0 else 1.0
 		enemy.slow_time = maxf(0.0, enemy.slow_time - delta)
-		enemy.motion = encounters.movement(enemy, delta) * slow + enemy.knockback
+		var desired_velocity: Vector2 = encounters.movement(enemy, delta) * slow + enemy.knockback
 		enemy.knockback = enemy.knockback.move_toward(Vector2.ZERO, 700.0 * delta)
-		var previous_position := enemy.position
 		# Outside hordes can enter; once inside, bodies cannot escape through the rim.
 		var confine: bool = boss_arena.active and (enemy.brain.get("boss", false) or boss_arena.contains(enemy.position, enemy.radius))
-		enemy.position = obstacles.move_actor(enemy.position, enemy.motion * delta, enemy.radius, boss_arena if confine else null)
-		enemy.motion = (enemy.position - previous_position) / delta if delta > 0.0 else Vector2.ZERO
-		enemy.moving = enemy.motion.length_squared() > 16.0
+		enemy.set_collision_mask_value(4, confine)
+		obstacles.ensure_collision(enemy.position, enemy.position + desired_velocity * delta, enemy.radius)
+		enemy.move_with_velocity(desired_velocity)
 		enemy.animate(delta)
-		if enemy.hp > 0 and invincible <= 0 and enemy.position.distance_to(player.position) < enemy.radius + 10:
+		if enemy.hp > 0 and invincible <= 0 and enemy.touches_body(player):
 			_damage_player(enemy.damage)
 			if state == "dead":
 				return
-		if enemy.position.distance_squared_to(player.position) > 2200.0 * 2200.0:
-			enemy.position = player.position + direction.rotated(PI) * 750
-			enemy.position = obstacles.safe_position(enemy.position, enemy.radius)
-			enemy.reset_physics_interpolation()
+		if not enemy.brain.get("boss", false) and enemy.position.distance_squared_to(player.position) > 2200.0 * 2200.0:
+			enemy.queue_free()
+	for index in range(enemies.size() - 1, -1, -1):
+		var enemy := enemies[index]
+		if enemy.is_queued_for_deletion() and enemy.hp > 0:
+			var point: Vector2 = player.position + player.position.direction_to(enemy.position) * 750.0
+			var replacement := _spawn_enemy(enemy.enemy_type, point)
+			for property in ["hp", "max_hp", "speed", "damage", "xp", "burn", "burn_damage", "slow_time", "slow_factor", "poison_time", "poison_damage", "knockback"]:
+				replacement.set(property, enemy.get(property))
+			replacement.brain = enemy.brain.duplicate(true)
+			enemies.remove_at(index)
 
 func _damage_player(amount: float) -> bool:
 	if invincible > 0.0 or state != "playing":
@@ -456,7 +466,7 @@ func _update_bullets(delta: float) -> void:
 				continue
 			var center: Vector2 = enemy.position + Vector2(0, -14)
 			var closest := Geometry2D.get_closest_point_to_segment(center, old, bullet.position)
-			if closest.distance_squared_to(center) > pow(enemy.radius + 4, 2):
+			if not enemy.intersects_projectile(old, bullet.position):
 				continue
 			buffs.hit_projectile(enemy, bullet)
 			bullet.hits.append(enemy.get_instance_id())

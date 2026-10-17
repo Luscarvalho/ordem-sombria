@@ -1,0 +1,50 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/actor.tscn" id="1_actor"]
+[ext_resource type="SpriteFrames" path="res://assets/animations/crawler-directions-v1.tres" id="2_frames"]
+
+[sub_resource type="CapsuleShape2D" id="Capsule_body"]
+radius = 13.0
+height = 26.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_hurt"]
+radius = 17.0
+height = 34.0
+
+[sub_resource type="CapsuleShape2D" id="Capsule_contact"]
+radius = 11.0
+height = 22.0
+
+[node name="Enemy" instance=ExtResource("1_actor")]
+collision_layer = 2
+collision_mask = 4
+kind = 1
+enemy_type = 0
+hp = 30.0
+max_hp = 30.0
+speed = 56.0
+damage = 10.0
+radius = 13.0
+xp = 2
+
+[node name="CollisionShape2D" parent="." index="0"]
+shape = SubResource("Capsule_body")
+
+[node name="AnimatedBody" parent="." index="1"]
+position = Vector2(0, -10.5)
+scale = Vector2(0.170103093, 0.170103093)
+sprite_frames = ExtResource("2_frames")
+
+[node name="Hurtbox" parent="." index="2"]
+position = Vector2(0, -14)
+collision_layer = 32
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+shape = SubResource("Capsule_hurt")
+
+[node name="ContactHitbox" type="Area2D" parent="."]
+collision_layer = 64
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactHitbox"]
+shape = SubResource("Capsule_contact")

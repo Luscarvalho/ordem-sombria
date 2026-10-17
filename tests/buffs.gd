@@ -94,7 +94,9 @@ func run_checks() -> void:
 	target.speed = 100
 	game.buffs.hit_projectile(target, {"damage": 10.0, "color": Color.WHITE})
 	assert(target.hp == 9990 and target.burn_damage == 18 and target.poison_damage == 18)
-	game._update_enemies(1.0)
+	for tick in range(60):
+		await physics_frame
+		game._update_enemies(1.0 / 60.0)
 	assert(is_equal_approx(target.hp, 9954))
 	assert(target.position.distance_to(Vector2(100, 0)) < 0.01, "Rank III frost must halve movement")
 	game._update_enemies(5.0)

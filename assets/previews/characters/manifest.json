@@ -1,0 +1,76 @@
+{
+	"characters": [
+		{
+			"fps": 24.0,
+			"frame_count": 72,
+			"frames": "/tmp/horda-character-gifs/cacadora",
+			"id": "cacadora",
+			"name": "CAÇADORA",
+			"output": "assets/previews/characters/cacadora.gif"
+		},
+		{
+			"fps": 24.1428571428571,
+			"frame_count": 78,
+			"frames": "/tmp/horda-character-gifs/aranha",
+			"id": "aranha",
+			"name": "ARANHA",
+			"output": "assets/previews/characters/aranha.gif"
+		},
+		{
+			"fps": 24.1738095238095,
+			"frame_count": 71,
+			"frames": "/tmp/horda-character-gifs/aranha-veloz",
+			"id": "aranha-veloz",
+			"name": "ARANHA VELOZ",
+			"output": "assets/previews/characters/aranha-veloz.gif"
+		},
+		{
+			"fps": 24.1119047619048,
+			"frame_count": 76,
+			"frames": "/tmp/horda-character-gifs/aranha-carapaca",
+			"id": "aranha-carapaca",
+			"name": "ARANHA DE CARAPAÇA",
+			"output": "assets/previews/characters/aranha-carapaca.gif"
+		},
+		{
+			"fps": 24.0,
+			"frame_count": 90,
+			"frames": "/tmp/horda-character-gifs/olho-vigia",
+			"id": "olho-vigia",
+			"name": "OLHO VIGIA",
+			"output": "assets/previews/characters/olho-vigia.gif"
+		},
+		{
+			"fps": 24.1944444444444,
+			"frame_count": 67,
+			"frames": "/tmp/horda-character-gifs/fera",
+			"id": "fera",
+			"name": "FERA",
+			"output": "assets/previews/characters/fera.gif"
+		},
+		{
+			"fps": 24.2083333333333,
+			"frame_count": 83,
+			"frames": "/tmp/horda-character-gifs/cuspidor",
+			"id": "cuspidor",
+			"name": "CUSPIDOR DE VENENO",
+			"output": "assets/previews/characters/cuspidor.gif"
+		},
+		{
+			"fps": 24.1153846153846,
+			"frame_count": 66,
+			"frames": "/tmp/horda-character-gifs/colosso",
+			"id": "colosso",
+			"name": "COLOSSO DAS CINZAS",
+			"output": "assets/previews/characters/colosso.gif"
+		},
+		{
+			"fps": 24.2266865079365,
+			"frame_count": 85,
+			"frames": "/tmp/horda-character-gifs/matriarca",
+			"id": "matriarca",
+			"name": "MATRIARCA DO ENXAME",
+			"output": "assets/previews/characters/matriarca.gif"
+		}
+	]
+}

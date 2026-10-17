@@ -1,10 +1,30 @@
 extends Node2D
 ## A fixed world-space arena; geometry and effects advance only with the run.
-const RADIUS := 260.0
+const RADIUS := 400.0
+const WALL_SEGMENTS := 96
+const WALL_THICKNESS := 16.0
 var active := false
 var age := 0.0
+var boundary: StaticBody2D
 
 func _ready() -> void:
+	boundary = StaticBody2D.new()
+	boundary.name = "Boundary"
+	boundary.collision_layer = 0
+	boundary.collision_mask = 0
+	var half_angle := PI / WALL_SEGMENTS
+	var wall_radius := RADIUS * cos(half_angle) + WALL_THICKNESS * 0.5
+	for segment in range(WALL_SEGMENTS):
+		var angle := (segment + 0.5) * TAU / WALL_SEGMENTS
+		var shape := RectangleShape2D.new()
+		shape.size = Vector2(2.0 * wall_radius * tan(half_angle) + 0.5, WALL_THICKNESS)
+		var collider := CollisionShape2D.new()
+		collider.name = "Wall%d" % segment
+		collider.shape = shape
+		collider.position = Vector2.from_angle(angle) * wall_radius
+		collider.rotation = angle + PI * 0.5
+		boundary.add_child(collider)
+	add_child(boundary)
 	hide()
 
 func begin(center: Vector2) -> void:
@@ -12,11 +32,13 @@ func begin(center: Vector2) -> void:
 	position=center.round()
 	age=0.0
 	active=true
+	boundary.collision_layer = 8
 	show()
 	queue_redraw()
 
 func release() -> void:
 	active=false
+	boundary.collision_layer = 0
 	age=0.0
 	hide()
 	queue_redraw()
@@ -44,19 +66,6 @@ func fit_position(point: Vector2,radius: float,terrain: Node2D) -> Vector2:
 			var safe: Vector2=terrain.safe_position(candidate,radius)
 			if contains(safe,radius+0.05): return safe
 	return position
-
-func cast_inside(from: Vector2,displacement: Vector2,radius: float) -> Dictionary:
-	var miss:={"fraction":1.0,"normal":Vector2.ZERO,"obstacle":{}}
-	if not active or displacement.length_squared()<0.000001: return miss
-	var limit:=RADIUS-radius
-	var end:=from+displacement-position
-	if end.length_squared()<=limit*limit: return miss
-	var offset:=from-position
-	var a:=displacement.length_squared()
-	var b:=offset.dot(displacement)
-	var c:=offset.length_squared()-limit*limit
-	var fraction:=clampf((-b+sqrt(maxf(0,b*b-a*c)))/a,0,1)
-	return {"fraction":fraction,"normal":-(offset+displacement*fraction).normalized(),"obstacle":{"arena":true}}
 
 func _draw() -> void:
 	if not active: return

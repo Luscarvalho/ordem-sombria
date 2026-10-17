@@ -1,12 +1,14 @@
 extends SceneTree
 ## Regressions for fast legs, unequal direction rhythms and abrupt target flips.
 const Actor = preload("res://scripts/actor.gd")
+const HunterScene = preload("res://scenes/characters/hunter.tscn")
+const ColossusScene = preload("res://scenes/characters/enemies/colossus.tscn")
 
 func _initialize() -> void:
 	call_deferred("run_checks")
 
 func run_checks() -> void:
-	var actor := Actor.new()
+	var actor := HunterScene.instantiate()
 	root.add_child(actor)
 	actor.weapon = "revolver"
 	actor.reset_motion()
@@ -55,8 +57,7 @@ func run_checks() -> void:
 	actor.animate(0.10)
 	assert(absf(fposmod(actor.animation_clock, 1.0) - 0.55) < 0.01)
 	# Near-vertical monster movement should not mirror the whole large sprite.
-	var giant := Actor.new()
-	giant.kind = 4
+	var giant := ColossusScene.instantiate()
 	root.add_child(giant)
 	giant.moving = true
 	for i in range(30):

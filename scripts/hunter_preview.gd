@@ -1,6 +1,7 @@
 extends Control
 ## Standalone F6 animation viewer. Uses the same actor, art, sockets and timing as gameplay.
 const Actor = preload("res://scripts/actor.gd")
+const HunterScene = preload("res://scenes/characters/hunter.tscn")
 const Pixel = preload("res://scripts/pixel_theme.gd")
 const PREVIOUS_FRAMES = preload("res://assets/animations/hunter-directions-v6.tres")
 const DIRECTIONS := [Vector2.RIGHT, Vector2(1,1), Vector2.DOWN, Vector2(-1,1), Vector2.LEFT, Vector2(-1,-1), Vector2.UP, Vector2(1,-1)]
@@ -29,6 +30,7 @@ var selected_weapon := "revolver"
 var travel_button: Button
 var travel_clock := 0.0
 var stage_origins: Array[Vector2] = []
+var stage_anchors: Array[Node2D] = []
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -98,10 +100,17 @@ func _build_interface() -> void:
 func _build_actors() -> void:
 	var count := 1 if display_mode == 1 else 16 if display_mode == 2 else 8
 	for i in range(count):
-		var actor := Actor.new()
+		var anchor := Node2D.new()
+		anchor.name = "HunterStage%d" % i
+		stage.add_child(anchor)
+		stage_anchors.append(anchor)
+		var actor := HunterScene.instantiate()
 		actor.name = "Hunter%d" % i
+		actor.collision_layer = 0
+		actor.collision_mask = 0
 		actor.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		stage.add_child(actor)
+		anchor.add_child(actor)
+		actor.hurtbox.collision_layer = 0
 		if display_mode == 2 and i < 8:
 			actor.sprite.sprite_frames = PREVIOUS_FRAMES
 			actor.base_scale = actor._height() / PREVIOUS_FRAMES.get_frame_texture("idle", 0).get_height()
@@ -142,10 +151,14 @@ func _process(delta: float) -> void:
 	if playing:
 		for actor in actors:
 			actor.animate(delta * playback_speed)
-		if walking and travel_preview:
-			travel_clock += delta*playback_speed
-			_update_travel()
 		_update_captions()
+
+func _physics_process(delta: float) -> void:
+	if not playing:
+		return
+	if walking and travel_preview:
+		travel_clock += delta * playback_speed
+	_update_travel(delta)
 
 func _layout_actors() -> void:
 	if not is_instance_valid(stage) or actors.is_empty():
@@ -163,23 +176,28 @@ func _layout_actors() -> void:
 		var start := Vector2(i % columns, floori(float(i) / columns)) * cell
 		actors[i].scale = Vector2.ONE * actor_scale
 		stage_origins[i] = start + Vector2(cell.x * 0.5, (cell.y+32*actor_scale)*0.5 if travel_preview else 36+54*actor_scale)
-		actors[i].position = stage_origins[i]
+		stage_anchors[i].position = stage_origins[i]
 		direction_labels[i].position = start + Vector2(0, 4)
 		direction_labels[i].size = Vector2(cell.x, 32)
 		captions[i].position = start + Vector2(0, cell.y - 18)
 		captions[i].size = Vector2(cell.x, 16)
-	_update_travel()
 	stage.queue_redraw()
 
-func _update_travel() -> void:
+func _update_travel(delta: float) -> void:
 	var columns := 1 if display_mode == 1 else 8 if display_mode == 2 else 4
 	var rows := 1 if display_mode == 1 else 2
 	var cell := stage.size/Vector2(columns,rows)
 	var route := Vector2(minf(cell.x*0.26,130),minf(cell.y*0.15,45))
-	var progress := fposmod(travel_clock/4.0,1.0)*2.0-1.0
+	var progress := sin(travel_clock * TAU / 8.0)
 	for i in range(actors.size()):
 		var direction: Vector2 = DIRECTIONS[_sector(i)].sign()
-		actors[i].position = stage_origins[i]+direction*route*progress if travel_preview else stage_origins[i]
+		var target: Vector2 = direction * route * progress if travel_preview else Vector2.ZERO
+		var actor := actors[i]
+		var animation_motion: Vector2 = actor.motion
+		var animation_moving: bool = actor.moving
+		actor.move_with_velocity((stage_anchors[i].to_global(target) - actor.global_position) / delta)
+		actor.motion = animation_motion
+		actor.moving = animation_moving
 	stage.queue_redraw()
 
 func _draw_stage() -> void:
@@ -226,7 +244,6 @@ func restart_cycle() -> void:
 	travel_clock = 0.0
 	for i in range(actors.size()):
 		restart_actor(actors[i], i)
-	_update_travel()
 	_update_captions()
 
 func toggle_travel() -> void:
